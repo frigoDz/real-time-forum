@@ -10,9 +10,36 @@ func CreateUser(user models.User) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	lastId, err := result.LastInsertId()
+	lastID, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
-	return lastId, nil
+	return int(lastID), nil
+}
+
+func GetUserByNicknameOrEmail(identifier string) (models.User, error) {
+	var user models.User
+
+	query := `
+		SELECT id, nickname, age, gender, first_name, last_name, email, password, created_at
+		FROM users
+		WHERE nickname = ? OR email = ?
+	`
+
+	err := DB.QueryRow(query, identifier, identifier).Scan(
+		&user.ID,
+		&user.Nickname,
+		&user.Age,
+		&user.Gender,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
 }
