@@ -1,52 +1,105 @@
 package handlers
 
 import (
-	"fmt"
+	"encoding/json"
+	"html"
+	"log"
 	"net/http"
+	"net/mail"
+	"strings"
+
 	"real-time-forum/internal/auth"
 	"real-time-forum/internal/database"
 	"real-time-forum/internal/models"
-	"strconv"
 )
+
+type RegisterRequest struct {
+	Nickname  string `json:"nickname"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Age       int    `json:"age"`
+	Gender    string `json:"gender"`
+	CreatedAt string `json:"createdAt"`
+}
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		SendError(w, http.StatusMethodNotAllowed, "Method Not Allowed!")
 		return
 	}
-	nickname := r.FormValue("nickname")
-	ageString := r.FormValue("age")
-	gender := r.FormValue("gender")
-	firstName := r.FormValue("firstName")
-	lastName := r.FormValue("lastName")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
 
-	age, err := strconv.Atoi(ageString)
+	var req RegisterRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "invalid age", http.StatusBadRequest)
+		SendError(w, http.StatusBadRequest, "Invalid JSON Data!")
 		return
 	}
-	hashedPassword, err := auth.HashPassword(password)
-	if err != nil {
-		http.Error(w, "failed to hash password", http.StatusInternalServerError)
+
+	// 1. Trim whitespace
+	req.Nickname = strings.TrimSpace(req.Nickname)
+	req.Email = strings.TrimSpace(req.Email)
+	req.FirstName = strings.TrimSpace(req.FirstName)
+	req.LastName = strings.TrimSpace(req.LastName)
+	req.Gender = strings.TrimSpace(req.Gender)
+
+	// 2. Validate empty fields
+	if req.Nickname == "" || req.Email == "" || req.Password == "" || req.FirstName == "" || req.LastName == "" || req.Gender == "" {
+		SendError(w, http.StatusBadRequest, "All fields are required!")
 		return
 	}
+
+	// 3. Validate Email format
+	parsedEmail, err := mail.ParseAddress(req.Email)
+	if err != nil {
+		SendError(w, http.StatusBadRequest, "Invalid Email Address!")
+		return
+	}
+
+	// 4. Validate Password length
+	if len(req.Password) < 8 || len(req.Password) > 72 {
+		SendError(w, http.StatusBadRequest, "Password must be between 8 and 72 characters!")
+		return
+	}
+
+	// 5. Validate Age boundaries
+	if req.Age < 13 || req.Age > 120 {
+		SendError(w, http.StatusBadRequest, "Age must be between 13 and 120!")
+		return
+	}
+
+	// 6. Security Sanitization (XSS prevention)
+	cleanNickname := html.EscapeString(req.Nickname)
+	cleanFirstName := html.EscapeString(req.FirstName)
+	cleanLastName := html.EscapeString(req.LastName)
+	cleanGender := html.EscapeString(req.Gender)
+
+	// 7. Hash Password (only after all validations pass)
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		SendError(w, http.StatusInternalServerError, "Failed To Hash The Password!")
+		return
+	}
+
 	user := models.User{
-		Nickname:  nickname,
-		Age:       age,
-		Gender:    gender,
-		FirstName: firstName,
-		LastName:  lastName,
-		Email:     email,
+		Nickname:  cleanNickname,
+		Email:     parsedEmail.Address,
 		Password:  hashedPassword,
+		FirstName: cleanFirstName,
+		LastName:  cleanLastName,
+		Age:       req.Age,
+		Gender:    cleanGender,
+		CreatedAt: req.CreatedAt,
 	}
-	userID, err := database.CreateUser(user)
+
+	lastId, err := database.CreateUser(user)
 	if err != nil {
-		http.Error(w, "failed to create user", http.StatusInternalServerError)
+		SendError(w, http.StatusBadRequest, "Nickname or Email already registered!")
+		log.Println("DB Register Error:", err)
 		return
 	}
-	fmt.Fprintf(w, "user created with ID %d", userID)
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("user created"))
+
+	SendResponse(w, http.StatusCreated, map[string]any{"message": "User Created", "user_id": lastId})
 }
+

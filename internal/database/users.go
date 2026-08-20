@@ -23,10 +23,10 @@ func GetUserByNicknameOrEmail(identifier string) (models.User, error) {
 	query := `
 		SELECT id, nickname, age, gender, first_name, last_name, email, password, created_at
 		FROM users
-		WHERE nickname = ? OR email = ?
+		WHERE id = ? OR nickname = ? OR email = ?
 	`
 
-	err := DB.QueryRow(query, identifier, identifier).Scan(
+	err := DB.QueryRow(query, identifier, identifier, identifier).Scan(
 		&user.ID,
 		&user.Nickname,
 		&user.Age,

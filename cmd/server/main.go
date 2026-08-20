@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"real-time-forum/internal/database"
 	"real-time-forum/internal/routes"
@@ -12,5 +13,5 @@ func main() {
 	defer database.DBClose()
 	routes.Route()
 	fmt.Println("server running on http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
