@@ -17,6 +17,8 @@ func Route() {
 	http.HandleFunc("/posts/create", handlers.CreatePost)
 	http.HandleFunc("/comments", handlers.Comments)
 	http.HandleFunc("/messages", handlers.Messages)
+	http.HandleFunc("/session", handlers.Session)
+	http.HandleFunc("/me", handlers.Me)
 	http.Handle("/ws", middleware.AuthMiddleware(
 		handlers.WebSocketHandler(manager),
 	))

@@ -41,3 +41,11 @@ func GetSessionByToken(token string) (int, error) {
 
 	return userID, nil
 }
+
+func DeleteSession(token string) error {
+	query := `
+		DELETE ALL FROM session WHERE token = ?
+	`
+	_, err := DB.Exec(query, token)
+	return err
+}

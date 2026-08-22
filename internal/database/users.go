@@ -43,3 +43,29 @@ func GetUserByNicknameOrEmail(identifier string) (models.User, error) {
 
 	return user, nil
 }
+
+func GetUserByID(id int) (models.User, error) {
+	var user models.User
+
+	query := `
+		SELECT id, nickname, age, gender, first_name, last_name, email, created_at
+		FROM users
+		WHERE id = ?
+	`
+
+	err := DB.QueryRow(query, id).Scan(
+		&user.ID,
+		&user.Nickname,
+		&user.Age,
+		&user.Gender,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return user, nil
+}
