@@ -9,7 +9,6 @@ import (
 
 func Route() {
 	manager := websockets.NewClientManager()
-	http.HandleFunc("/", handlers.Home)
 	http.HandleFunc("/register", handlers.Register)
 	http.HandleFunc("/login", handlers.Login)
 	http.HandleFunc("/logout", handlers.Logout)
