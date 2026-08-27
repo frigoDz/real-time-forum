@@ -12,6 +12,7 @@ func main() {
 	database.DBinit()
 	defer database.DBClose()
 	routes.Route()
+	http.Handle("/", http.FileServer(http.Dir("./web")))
 	fmt.Println("server running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
