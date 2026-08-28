@@ -9,16 +9,21 @@ import (
 
 func Route() {
 	manager := websockets.NewClientManager()
-	http.HandleFunc("/register", handlers.Register)
-	http.HandleFunc("/login", handlers.Login)
-	http.HandleFunc("/logout", handlers.Logout)
-	http.HandleFunc("/posts", handlers.Posts)
-	http.HandleFunc("/posts/create", handlers.CreatePost)
-	http.HandleFunc("/comments", handlers.Comments)
-	http.HandleFunc("/messages", handlers.Messages)
-	http.HandleFunc("/session", handlers.Session)
-	http.HandleFunc("/me", handlers.Me)
-	http.Handle("/ws", middleware.AuthMiddleware(
+	http.HandleFunc("/api/register", handlers.Register)
+	http.HandleFunc("/api/login", handlers.Login)
+	http.HandleFunc("/api/logout", handlers.Logout)
+	http.HandleFunc("/api/posts", handlers.Posts)
+	http.HandleFunc("/api/posts/create", handlers.CreatePost)
+	http.HandleFunc("/api/comments", handlers.Comments)
+	http.HandleFunc("/api/messages", handlers.Messages)
+	http.HandleFunc("/api/session", handlers.Session)
+	http.HandleFunc("/api/me", handlers.Me)
+
+	// Admin API Endpoints
+	http.HandleFunc("/api/admin/users", handlers.AdminUsers)
+	http.HandleFunc("/api/admin/sessions", handlers.AdminSessions)
+
+	http.Handle("/api/ws", middleware.AuthMiddleware(
 		handlers.WebSocketHandler(manager),
 	))
 }

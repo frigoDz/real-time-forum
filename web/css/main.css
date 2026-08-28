@@ -1,0 +1,42 @@
+@import "./components.css";
+@import "./views.css";
+
+/* X.com (Twitter) Dark Theme System */
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #16181c;
+  --bg-tertiary: #202327;
+  --bg-hover: #18191c;
+  --border-color: #2f3336;
+  --border-focus: #1d9bf0;
+  --text-main: #e7e9ea;
+  --text-muted: #71767b;
+  --accent-color: #1d9bf0;
+  --accent-hover: #1a8cd8;
+  --error-color: #f4212e;
+  --success-color: #00ba7c;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
