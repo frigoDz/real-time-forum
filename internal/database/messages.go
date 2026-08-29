@@ -69,3 +69,63 @@ func CreateMessage(message models.Message) (int64, error) {
 
 	return result.LastInsertId()
 }
+func GetConversationUsers(userID int) ([]models.User, error) {
+	query := `
+		SELECT
+			u.id,
+			u.nickname,
+			u.age,
+			u.gender,
+			u.first_name,
+			u.last_name,
+			u.email,
+			u.created_at
+		FROM users u
+		JOIN (
+			SELECT
+				CASE
+					WHEN sender_id = ? THEN receiver_id
+					ELSE sender_id
+				END AS other_user_id,
+				MAX(created_at) AS last_message
+			FROM messages
+			WHERE sender_id = ? OR receiver_id = ?
+			GROUP BY other_user_id
+		) m ON u.id = m.other_user_id
+		ORDER BY m.last_message DESC
+	`
+
+	rows, err := DB.Query(query, userID, userID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Nickname,
+			&user.Age,
+			&user.Gender,
+			&user.FirstName,
+			&user.LastName,
+			&user.Email,
+			&user.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

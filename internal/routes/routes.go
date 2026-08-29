@@ -9,15 +9,35 @@ import (
 
 func Route() {
 	manager := websockets.NewClientManager()
+	http.Handle("/api/users/online",
+		middleware.AuthMiddleware(
+			handlers.OnlineStatus(manager),
+		),
+	)
+	http.Handle("/api/conversations",
+		middleware.AuthMiddleware(
+			http.HandlerFunc(handlers.ConversationUsers),
+		),
+	)
 	http.HandleFunc("/api/register", handlers.Register)
 	http.HandleFunc("/api/login", handlers.Login)
 	http.HandleFunc("/api/logout", handlers.Logout)
 	http.HandleFunc("/api/posts", handlers.Posts)
-	http.HandleFunc("/api/posts/create", handlers.CreatePost)
-	http.HandleFunc("/api/comments", handlers.Comments)
-	http.HandleFunc("/api/messages", handlers.Messages)
-	http.HandleFunc("/api/session", handlers.Session)
-	http.HandleFunc("/api/me", handlers.Me)
+	http.Handle("/api/posts/create",
+		middleware.AuthMiddleware(http.HandlerFunc(handlers.CreatePost)),
+	)
+	http.Handle("/api/comments",
+		middleware.AuthMiddleware(http.HandlerFunc(handlers.Comments)),
+	)
+	http.Handle("/api/messages", middleware.AuthMiddleware(
+		http.HandlerFunc(handlers.Messages),
+	))
+	http.Handle("/api/session", middleware.AuthMiddleware(
+		http.HandlerFunc(handlers.Session),
+	))
+	http.Handle("/api/me", middleware.AuthMiddleware(
+		http.HandlerFunc(handlers.Me),
+	))
 
 	// Admin API Endpoints
 	http.HandleFunc("/api/admin/users", handlers.AdminUsers)

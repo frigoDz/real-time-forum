@@ -34,3 +34,11 @@ func (m *ClientManager) GetClient(userID int) (*websocket.Conn, bool) {
 	conn, ok := m.clients[userID]
 	return conn, ok
 }
+
+func (m *ClientManager) IsOnline(userID int) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	_, ok := m.clients[userID]
+	return ok
+}
