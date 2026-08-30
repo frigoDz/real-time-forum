@@ -4,6 +4,7 @@ import { renderLogin, initLogin } from "./views/login.js";
 import { initLogout } from "./views/logout.js";
 import { renderRegister, initRegister } from "./views/register.js";
 import { renderAdmin, initAdmin } from "./views/admin.js";
+import { renderError } from "./views/error.js"
 
 const routes = {
     "/": {
@@ -33,7 +34,7 @@ const routes = {
     },
     404: {
         title: "Not Found",
-        render: () => "<h1>404 - Not found!</h1>"
+        render: renderError
     },
 }
 

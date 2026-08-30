@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"real-time-forum/internal/database"
 	"real-time-forum/internal/models"
 )
 
 type CreatePostRequest struct {
-	Title      string `json:"title"`
 	Content    string `json:"content"`
 	Categories []int  `json:"categories"`
 }
@@ -48,13 +48,24 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Title == "" || req.Content == "" {
-		SendError(w, http.StatusBadRequest, "Title and Content are required!")
+	req.Content = strings.TrimSpace(req.Content)
+
+	if req.Content == "" {
+		SendError(w, http.StatusBadRequest, "Post content is required!")
+		return
+	}
+
+	if len(req.Content) < 5 || len(req.Content) > 2000 {
+		SendError(w, http.StatusBadRequest, "Content length must be between 5 and 2000 characters!")
+		return
+	}
+
+	if len(req.Categories) == 0 {
+		SendError(w, http.StatusBadRequest, "At least one category is required!")
 		return
 	}
 
 	post := models.Post{
-		Title:   req.Title,
 		Content: req.Content,
 		UserID:  userID,
 	}
@@ -66,7 +77,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Attach categories to the newly created post
+	// Attach categories to the newly created post in post_category join table
 	err = database.AddPostCategories(id, req.Categories)
 	if err != nil {
 		SendError(w, http.StatusInternalServerError, "Failed to add categories!")

@@ -1,0 +1,185 @@
+/* Layout & Grid System (Full height app frame, center-only Y scroll) */
+
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.home-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 1rem;
+  overflow: hidden;
+}
+
+/* 1. Header (Fixed Height, 5/5 Width) */
+.home-header {
+  height: var(--header-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.5rem 0;
+  background-color: var(--bg-primary);
+  z-index: 100;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-main);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* 2. Main 3-Column Grid */
+.main-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr 260px;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0; /* Required for nested Y scrolling */
+  padding-top: 1rem;
+  overflow: hidden;
+}
+
+/* Left Sidebar (Fixed Screen Height, Action Buttons Pinned at Bottom) */
+.left-side {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding-bottom: 1rem;
+  padding: 10px;
+}
+
+.left-side__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+.left-side .actions {
+  margin-top: auto; /* Pushes action buttons to the very bottom */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+
+/* Clean gap between signout icon and logout text */
+.left-side .logout-btn i {
+  margin-right: 0.6rem;
+}
+
+/* Center Posts Area (ONLY THIS SCROLLS) */
+.posts-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  min-width: 0;
+}
+
+/* Right Sidebar (Full Height, Independent Y Scrollable User Containers) */
+.right-side {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  gap: 1.25rem;
+  padding-bottom: 1rem;
+}
+
+.users-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Allows container Y scrolling */
+}
+
+.users-group__list {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints & Priorities
+   ========================================================================== */
+
+/* Priority 1: On small devices (< 1024px), hide right aside first */
+@media (max-width: 1024px) {
+  .right-side {
+    display: none !important;
+  }
+  
+  .main-grid {
+    grid-template-columns: 220px 1fr;
+  }
+}
+
+/* On tablets (< 768px): Hide search bar */
+@media (max-width: 768px) {
+  .header-search {
+    display: none !important;
+  }
+}
+
+/* Priority 2: On smaller devices (< 640px): 
+   - Hide user info & show menu icon
+   - Collapse left side to icons only
+*/
+@media (max-width: 640px) {
+  .home-header .user-info {
+    display: none !important;
+  }
+
+  .menu-toggle {
+    display: flex !important;
+  }
+
+  .main-grid {
+    grid-template-columns: 68px 1fr;
+    gap: 0.75rem;
+  }
+
+  .left-side h3 {
+    display: none !important;
+  }
+
+  /* Hide categories from left aside on small devices */
+  .left-side .categories-section {
+    display: none !important;
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding: 0.65rem;
+  }
+
+  .nav-item span {
+    display: none !important;
+  }
+
+  .left-side .actions button {
+    padding: 0.65rem;
+    justify-content: center;
+  }
+
+  .left-side .actions button span {
+    display: none !important;
+  }
+}

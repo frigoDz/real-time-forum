@@ -5,15 +5,15 @@ import (
 	"strings"
 )
 
+// CreatePost inserts a new post record into SQLite (content & user_id) and returns the generated post ID.
 func CreatePost(post models.Post) (int64, error) {
 	query := `
-		INSERT INTO posts (title, content, user_id)
-		VALUES (?, ?, ?)
+		INSERT INTO posts (content, user_id)
+		VALUES (?, ?)
 	`
 
 	result, err := DB.Exec(
 		query,
-		post.Title,
 		post.Content,
 		post.UserID,
 	)
@@ -24,16 +24,18 @@ func CreatePost(post models.Post) (int64, error) {
 	return result.LastInsertId()
 }
 
+// GetPosts returns all posts from SQLite along with author nicknames and associated categories.
 func GetPosts() ([]models.Post, error) {
 	query := `
 		SELECT
 			p.id,
-			p.title,
 			p.content,
 			p.user_id,
+			COALESCE(u.nickname, 'Anonymous') AS author,
 			p.created_at,
 			COALESCE(GROUP_CONCAT(c.name), '') AS categories
 		FROM posts p
+		LEFT JOIN users u ON p.user_id = u.id
 		LEFT JOIN post_category pc ON p.id = pc.post_id
 		LEFT JOIN category c ON pc.category_id = c.id
 		GROUP BY p.id
@@ -54,9 +56,9 @@ func GetPosts() ([]models.Post, error) {
 
 		err := rows.Scan(
 			&post.ID,
-			&post.Title,
 			&post.Content,
 			&post.UserID,
+			&post.Author,
 			&post.CreatedAt,
 			&categories,
 		)
@@ -77,17 +79,32 @@ func GetPosts() ([]models.Post, error) {
 		return nil, err
 	}
 
+	if posts == nil {
+		posts = []models.Post{}
+	}
+
 	return posts, nil
 }
 
+// AddPostCategories inserts entries into the post_category join table.
 func AddPostCategories(postID int64, categoryIDs []int) error {
+	if len(categoryIDs) == 0 {
+		return nil
+	}
+
 	query := `
-		INSERT INTO post_category (post_id, category_id)
+		INSERT OR IGNORE INTO post_category (post_id, category_id)
 		VALUES (?, ?)
 	`
 
+	stmt, err := DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
 	for _, categoryID := range categoryIDs {
-		_, err := DB.Exec(query, postID, categoryID)
+		_, err := stmt.Exec(postID, categoryID)
 		if err != nil {
 			return err
 		}

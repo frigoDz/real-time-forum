@@ -22,7 +22,7 @@ func Route() {
 	http.HandleFunc("/api/register", handlers.Register)
 	http.HandleFunc("/api/login", handlers.Login)
 	http.HandleFunc("/api/logout", handlers.Logout)
-	http.HandleFunc("/api/posts", handlers.Posts)
+	http.Handle("/api/posts", middleware.AuthMiddleware(http.HandlerFunc(handlers.Posts)))
 	http.Handle("/api/posts/create",
 		middleware.AuthMiddleware(http.HandlerFunc(handlers.CreatePost)),
 	)
@@ -38,10 +38,29 @@ func Route() {
 	http.Handle("/api/me", middleware.AuthMiddleware(
 		http.HandlerFunc(handlers.Me),
 	))
+	http.Handle("/api/categories", middleware.AuthMiddleware(
+		http.HandlerFunc(handlers.Categories),
+	))
 
-	// Admin API Endpoints
+	// Admin API Endpoints (Full CRUD for DB Management)
 	http.HandleFunc("/api/admin/users", handlers.AdminUsers)
+	http.HandleFunc("/api/admin/users/update", handlers.AdminUsersUpdate)
+	http.HandleFunc("/api/admin/users/delete-batch", handlers.AdminUsersDeleteBatch)
+
 	http.HandleFunc("/api/admin/sessions", handlers.AdminSessions)
+	http.HandleFunc("/api/admin/sessions/delete-batch", handlers.AdminSessionsDeleteBatch)
+
+	http.HandleFunc("/api/admin/posts", handlers.AdminPosts)
+	http.HandleFunc("/api/admin/posts/update", handlers.AdminPostsUpdate)
+	http.HandleFunc("/api/admin/posts/delete-batch", handlers.AdminPostsDeleteBatch)
+
+	http.HandleFunc("/api/admin/categories", handlers.AdminCategories)
+	http.HandleFunc("/api/admin/categories/create", handlers.AdminCategoriesCreate)
+	http.HandleFunc("/api/admin/categories/update", handlers.AdminCategoriesUpdate)
+	http.HandleFunc("/api/admin/categories/delete-batch", handlers.AdminCategoriesDeleteBatch)
+
+	http.HandleFunc("/api/admin/comments", handlers.AdminComments)
+	http.HandleFunc("/api/admin/comments/delete-batch", handlers.AdminCommentsDeleteBatch)
 
 	http.Handle("/api/ws", middleware.AuthMiddleware(
 		handlers.WebSocketHandler(manager),

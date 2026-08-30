@@ -10,14 +10,14 @@ export function renderRegister() {
           <div>
             <label for="firstName">First name</label>
             <div class="input-field">
-              <i class="fa-solid fa-id-card input-icon"></i>
+              <i class="fa-solid fa-user input-icon"></i>
               <input type="text" name="firstName" id="firstName" placeholder="First name" required minlength="2" maxlength="50">
             </div>
           </div>
           <div>
             <label for="lastName">Last name</label>
             <div class="input-field">
-              <i class="fa-solid fa-id-card input-icon"></i>
+              <i class="fa-solid fa-user input-icon"></i>
               <input type="text" name="lastName" id="lastName" placeholder="Last name" required minlength="2" maxlength="50">
             </div>
           </div>

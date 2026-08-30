@@ -71,4 +71,6 @@ func TableCreation() {
 			log.Fatal(err)
 		}
 	}
+
+	SeedCategories()
 }
