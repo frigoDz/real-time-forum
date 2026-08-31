@@ -68,4 +68,10 @@ func Route() {
 	http.Handle("/api/ws", middleware.AuthMiddleware(
 		handlers.WebSocketHandler(manager),
 	))
+	http.Handle(
+		"/api/likes",
+		middleware.AuthMiddleware(
+			handlers.ToggleLike(),
+		),
+	)
 }
