@@ -23,10 +23,10 @@ func GetUserByNicknameOrEmail(identifier string) (models.User, error) {
 	query := `
 		SELECT id, nickname, age, gender, first_name, last_name, email, password, created_at
 		FROM users
-		WHERE id = ? OR nickname = ? OR email = ?
+		WHERE nickname = ? OR email = ?
 	`
 
-	err := DB.QueryRow(query, identifier, identifier, identifier).Scan(
+	err := DB.QueryRow(query, identifier, identifier).Scan(
 		&user.ID,
 		&user.Nickname,
 		&user.Age,
@@ -92,3 +92,4 @@ func DeleteUser(id int) error {
 	_, err := DB.Exec("DELETE FROM users WHERE id = ?", id)
 	return err
 }
+
