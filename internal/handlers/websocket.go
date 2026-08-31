@@ -26,9 +26,19 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 		}
 
 		manager.AddClient(userID, conn)
+		manager.Broadcast(map[string]any{
+			"type":   "user_online",
+			"userId": userID,
+		})
 
 		defer func() {
 			manager.RemoveClient(userID)
+
+			manager.Broadcast(map[string]any{
+				"type":   "user_offline",
+				"userId": userID,
+			})
+
 			conn.Close()
 		}()
 		for {

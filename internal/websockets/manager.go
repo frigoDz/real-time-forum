@@ -1,8 +1,9 @@
-package websocket
+package websockets
 
 import (
-	"github.com/gorilla/websocket"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type ClientManager struct {
@@ -15,18 +16,19 @@ func NewClientManager() *ClientManager {
 		clients: make(map[int]*websocket.Conn),
 	}
 }
+
 func (m *ClientManager) AddClient(userID int, conn *websocket.Conn) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	m.clients[userID] = conn
+	m.mu.Unlock()
 }
+
 func (m *ClientManager) RemoveClient(userID int) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	delete(m.clients, userID)
+	m.mu.Unlock()
 }
+
 func (m *ClientManager) GetClient(userID int) (*websocket.Conn, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -41,4 +43,15 @@ func (m *ClientManager) IsOnline(userID int) bool {
 
 	_, ok := m.clients[userID]
 	return ok
+}
+
+func (m *ClientManager) Broadcast(data any) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, conn := range m.clients {
+		if err := conn.WriteJSON(data); err != nil {
+			continue
+		}
+	}
 }
