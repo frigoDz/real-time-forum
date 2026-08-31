@@ -1,6 +1,9 @@
 package database
 
-import "real-time-forum/internal/models"
+import (
+	"database/sql"
+	"real-time-forum/internal/models"
+)
 
 func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) {
 	query := `
@@ -79,20 +82,21 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 			u.first_name,
 			u.last_name,
 			u.email,
-			u.created_at
+			u.created_at,
+			MAX(m.created_at) AS last_message
 		FROM users u
-		JOIN (
-			SELECT
-				CASE
-					WHEN sender_id = ? THEN receiver_id
-					ELSE sender_id
-				END AS other_user_id,
-				MAX(created_at) AS last_message
-			FROM messages
-			WHERE sender_id = ? OR receiver_id = ?
-			GROUP BY other_user_id
-		) m ON u.id = m.other_user_id
-		ORDER BY m.last_message DESC
+		LEFT JOIN messages m
+			ON (
+				(m.sender_id = ? AND m.receiver_id = u.id)
+				OR
+				(m.receiver_id = ? AND m.sender_id = u.id)
+			)
+		WHERE u.id != ?
+		GROUP BY u.id
+		ORDER BY
+			CASE WHEN last_message IS NULL THEN 1 ELSE 0 END,
+			last_message DESC,
+			u.nickname ASC
 	`
 
 	rows, err := DB.Query(query, userID, userID, userID)
@@ -105,6 +109,7 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 
 	for rows.Next() {
 		var user models.User
+		var lastMessage sql.NullString
 
 		err := rows.Scan(
 			&user.ID,
@@ -115,6 +120,7 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 			&user.LastName,
 			&user.Email,
 			&user.CreatedAt,
+			&lastMessage,
 		)
 		if err != nil {
 			return nil, err
@@ -125,6 +131,10 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	if users == nil {
+		users = []models.User{}
 	}
 
 	return users, nil
