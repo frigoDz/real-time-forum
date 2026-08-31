@@ -7,4 +7,5 @@ type Post struct {
 	Author     string   `json:"author"`
 	CreatedAt  string   `json:"createdAt"`
 	Categories []string `json:"categories"`
+	Likes      int      `json:"likes"`
 }

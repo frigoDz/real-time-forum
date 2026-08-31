@@ -34,10 +34,12 @@ func GetPosts() ([]models.Post, error) {
 			COALESCE(u.nickname, 'Anonymous') AS author,
 			p.created_at,
 			COALESCE(GROUP_CONCAT(c.name), '') AS categories
+			COUNT(DISTINCT l.id) AS likes
 		FROM posts p
 		LEFT JOIN users u ON p.user_id = u.id
 		LEFT JOIN post_category pc ON p.id = pc.post_id
 		LEFT JOIN category c ON pc.category_id = c.id
+		LEFT JOIN likes l ON p.id = l.post_id
 		GROUP BY p.id
 		ORDER BY p.created_at DESC
 	`
@@ -53,6 +55,7 @@ func GetPosts() ([]models.Post, error) {
 	for rows.Next() {
 		var post models.Post
 		var categories string
+		var likes int
 
 		err := rows.Scan(
 			&post.ID,
@@ -61,6 +64,7 @@ func GetPosts() ([]models.Post, error) {
 			&post.Author,
 			&post.CreatedAt,
 			&categories,
+			&likes,
 		)
 		if err != nil {
 			return nil, err
@@ -72,6 +76,7 @@ func GetPosts() ([]models.Post, error) {
 			post.Categories = []string{}
 		}
 
+		post.Likes = likes
 		posts = append(posts, post)
 	}
 
