@@ -2,7 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"real-time-forum/internal/models"
+	"strings"
 )
 
 func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) {
@@ -55,6 +57,24 @@ func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) 
 }
 
 func CreateMessage(message models.Message) (int64, error) {
+	if message.SenderID <= 0 {
+		return 0, fmt.Errorf("invalid sender")
+	}
+
+	if message.ReceiverID <= 0 {
+		return 0, fmt.Errorf("invalid receiver")
+	}
+
+	if message.SenderID == message.ReceiverID {
+		return 0, fmt.Errorf("sender and receiver cannot be the same")
+	}
+
+	message.Content = strings.TrimSpace(message.Content)
+
+	if message.Content == "" {
+		return 0, fmt.Errorf("message cannot be empty")
+	}
+
 	query := `
 		INSERT INTO messages (sender_id, receiver_id, content)
 		VALUES (?, ?, ?)
