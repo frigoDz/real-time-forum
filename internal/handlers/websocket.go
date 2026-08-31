@@ -26,7 +26,11 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 			return
 		}
 
-		manager.AddClient(userID, conn)
+		oldClient := manager.AddClient(userID, conn)
+
+		if oldClient != nil {
+			oldClient.Conn.Close()
+		}
 		manager.Broadcast(map[string]any{
 			"type":   "user_online",
 			"userId": userID,
