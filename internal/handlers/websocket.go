@@ -75,13 +75,7 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 				continue
 			}
 
-			receiverConn, online := manager.GetClient(input.ReceiverID)
-			if !online {
-				continue
-			}
-
-			err = receiverConn.WriteJSON(message)
-			if err != nil {
+			if err := manager.SendJSON(input.ReceiverID, message); err != nil {
 				continue
 			}
 		}
