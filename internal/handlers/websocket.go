@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
+	"log"
 	"net/http"
 	websockets "real-time-forum/internal/websockets"
 	"strings"
@@ -52,6 +53,15 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 		for {
 			_, data, err := conn.ReadMessage()
 			if err != nil {
+				if websocket.IsUnexpectedCloseError(
+					err,
+					websocket.CloseGoingAway,
+					websocket.CloseNormalClosure,
+					websocket.CloseNoStatusReceived,
+				) {
+					log.Printf("websocket error for user %d: %v", userID, err)
+				}
+
 				break
 			}
 
@@ -59,6 +69,7 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 
 			err = json.Unmarshal(data, &input)
 			if err != nil {
+				log.Printf("invalid websocket message from user %d: %v", userID, err)
 				continue
 			}
 
