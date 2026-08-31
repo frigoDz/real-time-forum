@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	websockets "real-time-forum/internal/websockets"
+	"strings"
 
 	"real-time-forum/internal/database"
 	"real-time-forum/internal/models"
@@ -54,6 +55,15 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 				continue
 			}
 
+			input.Content = strings.TrimSpace(input.Content)
+
+			if input.ReceiverID <= 0 || input.Content == "" {
+				continue
+			}
+
+			if input.ReceiverID == userID {
+				continue
+			}
 			message := models.Message{
 				SenderID:   userID,
 				ReceiverID: input.ReceiverID,
