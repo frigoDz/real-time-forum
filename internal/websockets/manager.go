@@ -22,24 +22,34 @@ func NewClientManager() *ClientManager {
 	}
 }
 
-func (m *ClientManager) AddClient(userID int, conn *websocket.Conn) *Client {
+func (m *ClientManager) AddClient(userID int, conn *websocket.Conn) (*Client, *Client) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	oldClient := m.clients[userID]
 
-	m.clients[userID] = &Client{
+	client := &Client{
 		Conn: conn,
 	}
 
-	return oldClient
-}
-func (m *ClientManager) RemoveClient(userID int) {
-	m.mu.Lock()
-	delete(m.clients, userID)
-	m.mu.Unlock()
+	m.clients[userID] = client
+
+	return client, oldClient
 }
 
+func (m *ClientManager) RemoveClient(userID int, client *Client) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	currentClient, ok := m.clients[userID]
+	if !ok {
+		return
+	}
+
+	if currentClient == client {
+		delete(m.clients, userID)
+	}
+}
 func (m *ClientManager) GetClient(userID int) (*Client, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
