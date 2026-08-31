@@ -62,6 +62,9 @@ func Route() {
 	http.HandleFunc("/api/admin/comments", handlers.AdminComments)
 	http.HandleFunc("/api/admin/comments/delete-batch", handlers.AdminCommentsDeleteBatch)
 
+	http.Handle("/api/users", middleware.AuthMiddleware(
+		handlers.GetUsers(manager),
+	))
 	http.Handle("/api/ws", middleware.AuthMiddleware(
 		handlers.WebSocketHandler(manager),
 	))
