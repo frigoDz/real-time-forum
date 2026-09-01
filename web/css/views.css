@@ -239,46 +239,118 @@ label {
   padding-top: 0.75rem;
 }
 
-/* Category Multi-Select Checkbox Pills */
-.category-pills-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+/* Custom Category Dropdown & Pills */
+.category-dropdown-container {
+  position: relative;
+  display: inline-block;
 }
 
-.category-pill {
+.category-dropdown-btn {
   display: inline-flex;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.category-dropdown-btn:hover {
+  border-color: var(--border-focus);
+  background-color: var(--bg-hover-solid);
+}
+
+.category-dropdown-btn .dropdown-arrow {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.category-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  padding: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.category-dropdown-menu.hidden {
+  display: none !important;
+}
+
+.category-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.category-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
   user-select: none;
 }
 
-.category-pill input[type="checkbox"] {
-  display: none;
+.category-dropdown-item:hover {
+  background-color: var(--bg-hover-solid);
 }
 
-.category-pill__label {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
-  padding: 0.3rem 0.75rem;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
+.category-dropdown-item input[type="checkbox"] {
+  accent-color: #ffffff;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
 }
 
-.category-pill:hover .category-pill__label {
-  border-color: var(--text-dim);
+.category-dropdown-item__label {
+  font-size: 0.85rem;
   color: var(--text-main);
+  font-weight: 500;
 }
 
-.category-pill input[type="checkbox"]:checked + .category-pill__label {
+/* Selected Category Pills under Textarea */
+.selected-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.selected-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background-color: #ffffff;
   color: #000000;
-  border-color: #ffffff;
+  font-size: 0.775rem;
   font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.selected-pill i {
+  cursor: pointer;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.selected-pill i:hover {
+  opacity: 1;
 }
 
 .create-post-box .btn-submit-post {
@@ -305,14 +377,21 @@ label {
   font-size: 0.875rem;
 }
 
+.post-card__categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+}
+
 .post-card__category-badge {
   background-color: var(--bg-tertiary);
-  color: var(--text-main);
-  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.725rem;
   font-weight: 600;
-  padding: 0.15rem 0.6rem;
+  padding: 0.15rem 0.55rem;
   border-radius: var(--radius-full);
-  margin-left: auto;
 }
 
 .post-card__body {
@@ -328,7 +407,6 @@ label {
   gap: 0.5rem;
 }
 
-/* Clean Line Title for Users Groups (replaces dots/circles) */
 .users-group__header {
   font-size: 0.825rem;
   font-weight: 700;
@@ -377,7 +455,7 @@ label {
 }
 
 /* ==========================================================================
-   Mobile Category Overlay Menu
+   Mobile Side Drawer Menu
    ========================================================================== */
 .mobile-overlay {
   position: fixed;
@@ -385,16 +463,12 @@ label {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1.5rem;
+  justify-content: flex-end;
   opacity: 1;
   visibility: visible;
-  transition: opacity var(--transition-normal), visibility var(--transition-normal);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .mobile-overlay.hidden {
@@ -403,41 +477,92 @@ label {
   pointer-events: none;
 }
 
-.mobile-overlay__content {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+.mobile-overlay__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 380px;
-  padding: 1.5rem;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.mobile-overlay__drawer {
+  position: relative;
+  width: 280px;
+  height: 100%;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  z-index: 1001;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.mobile-overlay.hidden .mobile-overlay__drawer {
+  transform: translateX(100%);
 }
 
 .mobile-overlay__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 1.25rem;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0.75rem;
 }
 
-.mobile-overlay__header h2 {
-  font-size: 1.2rem;
+.user-info-mobile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-info-mobile .username {
   font-weight: 700;
   color: var(--text-main);
+  font-size: 0.95rem;
 }
 
 .mobile-overlay__close-btn {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.25rem;
-  transition: color var(--transition-fast);
+  padding: 0.3rem;
+}
+
+.mobile-overlay__body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mobile-post-btn {
+  margin-top: 0;
+}
+
+.mobile-categories-section h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.mobile-actions {
+  margin-top: auto;
+}
+
+.mobile-logout-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--error-color);
 }
 
 .mobile-overlay__close-btn:hover {

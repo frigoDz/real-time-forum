@@ -20,7 +20,15 @@ func Posts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := database.GetPosts()
+	categoryID := r.URL.Query().Get("category_id")
+	if categoryID == "" {
+		categoryID = r.URL.Query().Get("category")
+	}
+	filter := r.URL.Query().Get("filter")
+
+	userID, _ := r.Context().Value("userID").(int)
+
+	posts, err := database.GetPostsFiltered(categoryID, filter, userID)
 	if err != nil {
 		SendError(w, http.StatusInternalServerError, "Failed to get posts!")
 		return

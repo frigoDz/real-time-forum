@@ -5,6 +5,8 @@ import { initLogout } from "./views/logout.js";
 import { renderRegister, initRegister } from "./views/register.js";
 import { renderAdmin, initAdmin } from "./views/admin.js";
 import { renderError } from "./views/error.js"
+import { initLikedPosts, initMyPosts } from "./views/filteredPosts.js";
+import { initMessages, renderMessages } from "./views/messages.js";
 
 const routes = {
     "/": {
@@ -31,6 +33,21 @@ const routes = {
         title: "Admin Dashboard",
         render: renderAdmin,
         init: initAdmin
+    },
+    "/my-posts": {
+        title: "My Posts",
+        render: renderHome,
+        init: initMyPosts
+    },
+    "/liked-posts": {
+        title: "Liked Posts",
+        render: renderHome,
+        init: initLikedPosts
+    },
+    "/messages": {
+        title: "messages",
+        render: renderMessages,
+        init: initMessages
     },
     404: {
         title: "Not Found",

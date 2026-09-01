@@ -18,9 +18,11 @@ export async function createPost(data) {
     }
 }
 
-export async function getPosts() {
+export async function getPosts(params = {}) {
     try {
-        const res = await fetch("/api/posts", {
+        const query = new URLSearchParams(params).toString();
+        const url = query ? `/api/posts?${query}` : "/api/posts";
+        const res = await fetch(url, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });

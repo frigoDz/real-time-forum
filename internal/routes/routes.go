@@ -9,7 +9,7 @@ import (
 
 func Route() {
 	manager := websockets.NewClientManager()
-	http.Handle("/api/users/online",
+	http.Handle("/api/online",
 		middleware.AuthMiddleware(
 			handlers.OnlineStatus(manager),
 		),

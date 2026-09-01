@@ -138,9 +138,9 @@ html, body {
   }
 }
 
-/* Priority 2: On smaller devices (< 640px): 
-   - Hide user info & show menu icon
-   - Collapse left side to icons only
+/* Priority 2: On mobile devices (< 640px): 
+   - Position left-side navigation as a fixed bottom bar
+   - Remove Create Post & Logout buttons from bottom bar (placed in mobile drawer)
 */
 @media (max-width: 640px) {
   .home-header .user-info {
@@ -152,34 +152,69 @@ html, body {
   }
 
   .main-grid {
-    grid-template-columns: 68px 1fr;
-    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  .left-side h3 {
-    display: none !important;
+  /* Fixed Bottom Nav Bar */
+  .left-side {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    z-index: 990;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 0.5rem;
   }
 
-  /* Hide categories from left aside on small devices */
-  .left-side .categories-section {
-    display: none !important;
+  .left-side__nav {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+    align-items: center;
+    gap: 0;
+    overflow-y: visible;
+  }
+
+  .left-side__nav > div:first-child {
+    width: 100%;
+  }
+
+  .left-side__nav .nav-group {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .left-side h3,
+  .left-side .categories-section,
+  .left-side .actions {
+    display: none !important; /* Action buttons moved to mobile drawer */
   }
 
   .nav-item {
-    justify-content: center;
-    padding: 0.65rem;
+    /* justify-content: center; */
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
   }
 
-  .nav-item span {
+
+  .left-side .nav-item span {
     display: none !important;
   }
 
-  .left-side .actions button {
-    padding: 0.65rem;
-    justify-content: center;
+  .mobile-overlay .nav-item span,
+  #mobile-categories-list .nav-item span,
+  .mobile-categories-section .nav-item span {
+    display: inline-block !important;
   }
 
-  .left-side .actions button span {
-    display: none !important;
+  .posts-area {
+    padding-bottom: 75px; /* Prevent bottom nav from obscuring feed */
   }
 }

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"real-time-forum/internal/models"
 	"strings"
 )
@@ -26,26 +27,54 @@ func CreatePost(post models.Post) (int64, error) {
 
 // GetPosts returns all posts from SQLite along with author nicknames and associated categories.
 func GetPosts() ([]models.Post, error) {
-	query := `
+	return GetPostsFiltered("", "", 0)
+}
+
+// GetPostsFiltered returns posts with optional category, author (my-posts), or liked filter.
+func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Post, error) {
+	var whereClauses []string
+	var args []any
+
+	if categoryID != "" {
+		whereClauses = append(whereClauses, "p.id IN (SELECT post_id FROM post_category WHERE category_id = ?)")
+		args = append(args, categoryID)
+	}
+
+	if filter == "created" || filter == "my-posts" {
+		whereClauses = append(whereClauses, "p.user_id = ?")
+		args = append(args, userID)
+	} else if filter == "liked" || filter == "liked-posts" {
+		whereClauses = append(whereClauses, "p.id IN (SELECT post_id FROM likes WHERE user_id = ?)")
+		args = append(args, userID)
+	}
+
+	whereSQL := ""
+	if len(whereClauses) > 0 {
+		whereSQL = "WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	query := fmt.Sprintf(`
 		SELECT
 			p.id,
 			p.content,
 			p.user_id,
 			COALESCE(u.nickname, 'Anonymous') AS author,
 			p.created_at,
-			COALESCE(GROUP_CONCAT(c.name), '') AS categories
+			COALESCE(GROUP_CONCAT(DISTINCT c.name), '') AS categories,
 			COUNT(DISTINCT l.id) AS likes
 		FROM posts p
 		LEFT JOIN users u ON p.user_id = u.id
 		LEFT JOIN post_category pc ON p.id = pc.post_id
 		LEFT JOIN category c ON pc.category_id = c.id
 		LEFT JOIN likes l ON p.id = l.post_id
+		%s
 		GROUP BY p.id
 		ORDER BY p.created_at DESC
-	`
+	`, whereSQL)
 
-	rows, err := DB.Query(query)
+	rows, err := DB.Query(query, args...)
 	if err != nil {
+		fmt.Println("GetPostsFiltered query error:", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -67,6 +96,7 @@ func GetPosts() ([]models.Post, error) {
 			&likes,
 		)
 		if err != nil {
+			fmt.Println("GetPostsFiltered scan error:", err)
 			return nil, err
 		}
 
@@ -81,6 +111,7 @@ func GetPosts() ([]models.Post, error) {
 	}
 
 	if err := rows.Err(); err != nil {
+		fmt.Println("GetPostsFiltered rows error:", err)
 		return nil, err
 	}
 
@@ -95,6 +126,21 @@ func GetPosts() ([]models.Post, error) {
 func AddPostCategories(postID int64, categoryIDs []int) error {
 	if len(categoryIDs) == 0 {
 		return nil
+	}
+
+	// check available cats
+	dbCategories, err := GetAllCategories()
+	if err != nil {
+		return err
+	}
+	catMap := make(map[int]bool)
+	for _, cat := range dbCategories {
+		catMap[cat.ID] = true
+	}
+	for _, cat := range categoryIDs {
+		if !catMap[cat] {
+			return fmt.Errorf("Error: categorie/s not found!")
+		} 
 	}
 
 	query := `
