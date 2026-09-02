@@ -8,6 +8,6 @@ type Message struct {
 	CreatedAt  string
 }
 type SendMessage struct {
-	ReceiverID int    `json:"receiver_id"`
+	ReceiverID int    `json:"receiverId"`
 	Content    string `json:"content"`
 }
