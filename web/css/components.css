@@ -170,7 +170,7 @@ a:hover {
 
 .post-card__actions {
   display: flex;
-  gap: 2rem;
+  gap: 8px;
   color: var(--text-muted);
   font-size: 0.875rem;
   margin-top: 0.25rem;
@@ -185,6 +185,7 @@ a:hover {
   color: inherit;
   cursor: pointer;
   transition: color var(--transition-fast);
+  padding: 4px 8px;
 }
 
 .post-card__action-btn:hover {

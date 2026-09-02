@@ -7,6 +7,7 @@ import { renderAdmin, initAdmin } from "./views/admin.js";
 import { renderError } from "./views/error.js"
 import { initLikedPosts, initMyPosts } from "./views/filteredPosts.js";
 import { initMessages, renderMessages } from "./views/messages.js";
+import { initPostDetails, renderPostDetails } from "./views/post-details.js";
 
 const routes = {
     "/": {
@@ -45,9 +46,14 @@ const routes = {
         init: initLikedPosts
     },
     "/messages": {
-        title: "messages",
+        title: "Messages",
         render: renderMessages,
         init: initMessages
+    },
+    "/post": {
+        title: "Post Daitails",
+        render: renderPostDetails,
+        init: initPostDetails
     },
     404: {
         title: "Not Found",

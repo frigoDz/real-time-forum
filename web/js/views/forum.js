@@ -242,7 +242,7 @@ function renderCreatePostBox() {
   `;
 }
 
-function renderRightAside() {
+export function renderRightAside() {
   return /* html */ `
     <aside class="right-side">
       <div class="users-group">

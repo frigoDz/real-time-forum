@@ -26,7 +26,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. Return user (never send password)
+	// 4. Return user
 	SendResponse(w, http.StatusOK, map[string]any{
 		"id":         user.ID,
 		"nickname":   user.Nickname,
