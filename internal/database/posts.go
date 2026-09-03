@@ -35,6 +35,8 @@ func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Po
 	var whereClauses []string
 	var args []any
 
+	args = append(args, userID)
+
 	if categoryID != "" {
 		whereClauses = append(whereClauses, "p.id IN (SELECT post_id FROM post_category WHERE category_id = ?)")
 		args = append(args, categoryID)
@@ -61,12 +63,15 @@ func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Po
 			COALESCE(u.nickname, 'Anonymous') AS author,
 			p.created_at,
 			COALESCE(GROUP_CONCAT(DISTINCT c.name), '') AS categories,
-			COUNT(DISTINCT l.id) AS likes
+			COUNT(DISTINCT l.id) AS likes,
+			COUNT(DISTINCT cm.id) AS comments_count,
+			EXISTS(SELECT 1 FROM likes WHERE user_id = ? AND post_id = p.id) AS liked
 		FROM posts p
 		LEFT JOIN users u ON p.user_id = u.id
 		LEFT JOIN post_category pc ON p.id = pc.post_id
 		LEFT JOIN category c ON pc.category_id = c.id
 		LEFT JOIN likes l ON p.id = l.post_id
+		LEFT JOIN comments cm ON p.id = cm.post_id
 		%s
 		GROUP BY p.id
 		ORDER BY p.created_at DESC
@@ -85,6 +90,8 @@ func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Po
 		var post models.Post
 		var categories string
 		var likes int
+		var commentsCount int
+		var liked bool
 
 		err := rows.Scan(
 			&post.ID,
@@ -94,6 +101,8 @@ func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Po
 			&post.CreatedAt,
 			&categories,
 			&likes,
+			&commentsCount,
+			&liked,
 		)
 		if err != nil {
 			fmt.Println("GetPostsFiltered scan error:", err)
@@ -107,6 +116,8 @@ func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Po
 		}
 
 		post.Likes = likes
+		post.CommentsCount = commentsCount
+		post.Liked = liked
 		posts = append(posts, post)
 	}
 
@@ -163,3 +174,62 @@ func AddPostCategories(postID int64, categoryIDs []int) error {
 
 	return nil
 }
+
+// GetPostByID fetches a single post by its ID along with author nickname, categories, likes count, comments count, and liked status for current user.
+func GetPostByID(id int, userID int) (*models.Post, error) {
+	query := `
+		SELECT
+			p.id,
+			p.content,
+			p.user_id,
+			COALESCE(u.nickname, 'Anonymous') AS author,
+			p.created_at,
+			COALESCE(GROUP_CONCAT(DISTINCT c.name), '') AS categories,
+			COUNT(DISTINCT l.id) AS likes,
+			COUNT(DISTINCT cm.id) AS comments_count,
+			EXISTS(SELECT 1 FROM likes WHERE user_id = ? AND post_id = p.id) AS liked
+		FROM posts p
+		LEFT JOIN users u ON p.user_id = u.id
+		LEFT JOIN post_category pc ON p.id = pc.post_id
+		LEFT JOIN category c ON pc.category_id = c.id
+		LEFT JOIN likes l ON p.id = l.post_id
+		LEFT JOIN comments cm ON p.id = cm.post_id
+		WHERE p.id = ?
+		GROUP BY p.id
+	`
+
+	var post models.Post
+	var categories string
+	var likes int
+	var commentsCount int
+	var liked bool
+
+	err := DB.QueryRow(query, userID, id).Scan(
+		&post.ID,
+		&post.Content,
+		&post.UserID,
+		&post.Author,
+		&post.CreatedAt,
+		&categories,
+		&likes,
+		&commentsCount,
+		&liked,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if categories != "" {
+		post.Categories = strings.Split(categories, ",")
+	} else {
+		post.Categories = []string{}
+	}
+
+	post.Likes = likes
+	post.CommentsCount = commentsCount
+	post.Liked = liked
+	return &post, nil
+}
+
+
+

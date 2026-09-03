@@ -1,5 +1,8 @@
 import { getCategories } from "../api/categories.js";
+import { toggleLike } from "../api/likes.js";
 import { createPost, getPosts } from "../api/posts.js";
+import { state } from "../state.js";
+import { attachLengthLimit } from "../utils/limit.js";
 
 export function renderHome() {
   return /* html */`
@@ -14,6 +17,51 @@ export function renderHome() {
         ${renderRightAside()}
       </div>
       ${renderMobileOverlay()}
+      ${renderCreatePostModal()}
+    </div>
+  `;
+}
+
+export function renderCreatePostModal() {
+  const avatarChar = (state.user && state.user.nickname ? state.user.nickname.charAt(0) : "U").toUpperCase();
+  return /* html */ `
+    <div id="create-post-modal" class="overlay hidden">
+      <div class="add-post-container">
+        <header class="box-header">
+          <span>New Post</span>
+          <button type="button" id="close-modal-btn" class="close-modal-btn" aria-label="Close modal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </header>
+        <div class="modal-body">
+          <div class="user-avatar">${avatarChar}</div>
+          <div class="modal-inputs">
+            <textarea id="modal-post-content" name="modal-post-content" placeholder="What's happening?"></textarea>
+
+            <div id="modal-selected-category-pills" class="selected-category-pills"></div>
+
+            <div class="modal-sub-group">
+              <div class="modal-categories-dropdown">
+                <button type="button" id="modal-categories-btn" class="modal-categories-btn">
+                  <i class="fa-solid fa-tags"></i>
+                  <span id="modal-category-btn-text">Select categories</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div id="modal-categories-options" class="modal-categories-options hidden">
+                  <!-- Dynamic category checkboxes -->
+                </div>
+              </div>
+
+              <button type="button" class="modal-post-btn" id="modal-submit-post-btn">Post</button>
+            </div>
+            
+            <div class="length-limit" id="modal-length-limit">
+              <span></span>
+            </div>
+            <p class="modal-create-post-error error"></p>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -35,18 +83,6 @@ export function initMobileMenu() {
   }
   if (closeBtn) closeBtn.onclick = closeDrawer;
   if (backdrop) backdrop.onclick = closeDrawer;
-
-  const mobilePostBtn = document.querySelector("#mobile-create-post-btn");
-  if (mobilePostBtn) {
-    mobilePostBtn.onclick = () => {
-      closeDrawer();
-      const textarea = document.querySelector("textarea.post-content");
-      if (textarea) {
-        textarea.focus();
-        textarea.scrollIntoView({ behavior: "smooth" });
-      }
-    };
-  }
 }
 
 export function initHome() {
@@ -79,15 +115,18 @@ export function initHome() {
   else if (path === "/liked-posts") params = { filter: "liked-posts" };
 
   loadPosts(params);
-
-  // Create post submission handler
+  handleLikes();
+  initCreatePostModal();
   const submitPostBtn = document.querySelector(".btn-submit-post");
   const postForm = document.querySelector(".create-post-box");
   const postErrorElement = document.querySelector(".create-post-container .create-post-error");
 
   if (submitPostBtn && postForm) {
+    const textarea = postForm.querySelector("textarea.post-content");
+    const lengthLimit = postForm.querySelector(".length-limit");
+    const updateProgress = attachLengthLimit(textarea, lengthLimit, 2000);
+
     submitPostBtn.addEventListener("click", async () => {
-      const textarea = postForm.querySelector("textarea.post-content");
       const postContent = textarea ? textarea.value.trim() : "";
       
       if (postErrorElement) postErrorElement.textContent = "";
@@ -120,6 +159,7 @@ export function initHome() {
       } else {
         // Reset form on success
         if (textarea) textarea.value = "";
+        updateProgress();
         document.querySelectorAll('input[name="post-category"]:checked').forEach(cb => cb.checked = false);
         updateSelectedCategoryPills();
         if (postErrorElement) postErrorElement.textContent = "";
@@ -130,6 +170,9 @@ export function initHome() {
       }
     });
   }
+
+  handleLikes()
+
 }
 
 export function renderHeader() {
@@ -149,7 +192,7 @@ export function renderHeader() {
           <span>U</span>
           <span class="status-dot status-dot--online"></span>
         </div>
-        <span class="username">@user</span>
+        <span class="username">@${state.user.nickname}</span>
       </div>
       <button type="button" id="menu-toggle-btn" class="menu-toggle" aria-label="Open Menu">
         <i class="fa-solid fa-bars"></i>
@@ -193,7 +236,7 @@ export function renderLeftAside() {
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn-accent">
+        <button type="button" class="create-new-post-btn btn btn-accent">
           <i class="fa-solid fa-pen-to-square"></i>
           <span>Post</span>
         </button>
@@ -235,6 +278,9 @@ function renderCreatePostBox() {
 
             <button type="button" class="btn btn-accent btn-submit-post">Post</button>
           </div>
+        </div>
+        <div class="length-limit">
+          <span></span>
         </div>
       </div>
       <p class="create-post-error error"></p>
@@ -278,11 +324,6 @@ export function renderMobileOverlay() {
         </div>
 
         <div class="mobile-overlay__body">
-          <button type="button" class="btn btn-accent mobile-post-btn" id="mobile-create-post-btn">
-            <i class="fa-solid fa-pen-to-square"></i>
-            <span>Create Post</span>
-          </button>
-
           <div class="mobile-categories-section">
             <h3>Categories</h3>
             <nav id="mobile-categories-list" class="nav-group" aria-label="Mobile Categories">
@@ -291,6 +332,10 @@ export function renderMobileOverlay() {
           </div>
 
           <div class="mobile-actions">
+            <button type="button" class="create-new-post-btn btn btn-accent mobile-post-btn" id="mobile-create-post-btn">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Create Post</span>
+            </button>
             <button type="button" class="btn logout-btn mobile-logout-btn">
               <i class="fa-solid fa-arrow-right-from-bracket logout-icon"></i>
               <span>Logout</span>
@@ -363,6 +408,21 @@ export async function loadCategories() {
       cb.addEventListener("change", updateSelectedCategoryPills);
     });
   }
+
+  // Render checkboxes inside modal dropdown
+  const modalDropdownList = document.querySelector("#modal-categories-options");
+  if (modalDropdownList) {
+    modalDropdownList.innerHTML = categories.map(cat => /* html */ `
+      <label class="category-dropdown-item">
+        <input type="checkbox" name="modal-post-category" value="${cat.id}" data-name="${cat.name}">
+        <span class="category-dropdown-item__label">${cat.name}</span>
+      </label>
+    `).join("");
+
+    modalDropdownList.querySelectorAll('input[name="modal-post-category"]').forEach(cb => {
+      cb.addEventListener("change", updateModalCategoryPills);
+    });
+  }
 }
 
 function updateSelectedCategoryPills() {
@@ -399,6 +459,145 @@ function updateSelectedCategoryPills() {
   }
 }
 
+function updateModalCategoryPills() {
+  const selectedCbs = Array.from(document.querySelectorAll('input[name="modal-post-category"]:checked'));
+  const pillsContainer = document.querySelector("#modal-selected-category-pills");
+  const btnText = document.querySelector("#modal-category-btn-text");
+
+  if (btnText) {
+    btnText.textContent = selectedCbs.length === 0 ? "Select categories" : `${selectedCbs.length} Selected`;
+  }
+
+  if (pillsContainer) {
+    pillsContainer.innerHTML = selectedCbs.map(cb => `
+      <span class="selected-pill">
+        ${cb.dataset.name}
+        <i class="fa-solid fa-xmark modal-remove-pill-btn" data-value="${cb.value}"></i>
+      </span>
+    `).join("");
+
+    pillsContainer.querySelectorAll(".modal-remove-pill-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const val = e.target.dataset.value;
+        const targetCb = document.querySelector(`input[name="modal-post-category"][value="${val}"]`);
+        if (targetCb) {
+          targetCb.checked = false;
+          updateModalCategoryPills();
+        }
+      });
+    });
+  }
+}
+
+export function initCreatePostModal() {
+  const modal = document.querySelector("#create-post-modal");
+  if (!modal || modal.dataset.modalInitialized) return;
+  modal.dataset.modalInitialized = "true";
+
+  const closeBtn = document.querySelector("#close-modal-btn");
+  const dropdownBtn = document.querySelector("#modal-categories-btn");
+  const dropdownMenu = document.querySelector("#modal-categories-options");
+  const textarea = document.querySelector("#modal-post-content");
+  const submitBtn = document.querySelector("#modal-submit-post-btn");
+  const errorElement = document.querySelector(".modal-create-post-error");
+  const lengthLimitBar = document.querySelector("#modal-length-limit");
+
+  const updateProgress = attachLengthLimit(textarea, lengthLimitBar, 2000);
+
+  const openModal = () => {
+    modal.classList.remove("hidden");
+    if (textarea) textarea.focus();
+    const mobileOverlay = document.querySelector("#mobile-categories-overlay");
+    if (mobileOverlay) mobileOverlay.classList.add("hidden");
+  };
+
+  const closeModal = () => {
+    modal.classList.add("hidden");
+    if (textarea) textarea.value = "";
+    if (errorElement) errorElement.textContent = "";
+    document.querySelectorAll('input[name="modal-post-category"]:checked').forEach(cb => cb.checked = false);
+    updateModalCategoryPills();
+    updateProgress();
+    if (dropdownMenu) dropdownMenu.classList.add("hidden");
+  };
+
+  // Delegate click for any post buttons across all pages
+  document.body.addEventListener("click", (e) => {
+    if (e.target.closest(".create-new-post-btn, #mobile-create-post-btn")) {
+      e.preventDefault();
+      openModal();
+    }
+  });
+
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+      closeModal();
+    }
+  });
+
+  if (dropdownBtn && dropdownMenu) {
+    dropdownBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!dropdownMenu.contains(e.target) && e.target !== dropdownBtn && !dropdownBtn.contains(e.target)) {
+        dropdownMenu.classList.add("hidden");
+      }
+    });
+  }
+
+  if (submitBtn && textarea) {
+    submitBtn.addEventListener("click", async () => {
+      const content = textarea.value.trim();
+      if (errorElement) errorElement.textContent = "";
+
+      // 1. Validation: content length
+      if (content.length < 5 || content.length > 2000) {
+        if (errorElement) errorElement.textContent = "Post content must be between 5 and 2000 characters.";
+        return;
+      }
+
+      // 2. Validation: categories selection
+      const selectedCategories = Array.from(
+        document.querySelectorAll('input[name="modal-post-category"]:checked')
+      ).map(cb => parseInt(cb.value, 10));
+
+      if (selectedCategories.length < 1) {
+        if (errorElement) errorElement.textContent = "Please select at least one category.";
+        return;
+      }
+
+      // 3. Submit request
+      submitBtn.disabled = true;
+      if (errorElement) errorElement.textContent = "Publishing post...";
+
+      const res = await createPost({ content, categories: selectedCategories });
+
+      if (res && res.error) {
+        if (errorElement) errorElement.textContent = res.error;
+        submitBtn.disabled = false;
+      } else {
+        closeModal();
+        submitBtn.disabled = false;
+
+        const path = window.location.pathname;
+        let params = {};
+        if (path === "/my-posts") params = { filter: "my-posts" };
+        else if (path === "/liked-posts") params = { filter: "liked-posts" };
+        await loadPosts(params);
+      }
+    });
+  }
+}
+
 export async function loadPosts(params = {}) {
   const container = document.querySelector("#posts-container");
   if (!container) return;
@@ -415,6 +614,10 @@ export async function loadPosts(params = {}) {
       `<span class="post-card__category-badge">${cat}</span>`
     ).join(" ");
 
+    const isLiked = post.liked === true;
+    const heartIconClass = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+    const likedClass = isLiked ? "liked active" : "";
+
     return /* html */ `
       <article class="post-card" data-post-id="${post.id}">
         <header class="post-card__header">
@@ -430,16 +633,60 @@ export async function loadPosts(params = {}) {
           ${categoriesBadges ? `<div class="post-card__categories">${categoriesBadges}</div>` : ""}
         </div>
         <footer class="post-card__actions">
-          <button type="button" class="post-card__action-btn comments" aria-label="Comments">
+          <a href="/post?id=${post.id}" class="post-card__action-btn comments" aria-label="Comments">
             <i class="fa-regular fa-comment"></i>
-            <span>0</span>
-          </button>
-          <button type="button" class="post-card__action-btn likes" aria-label="Likes">
-            <i class="fa-regular fa-heart"></i>
-            <span>0</span>
+            <span>${post.commentsCount || 0}</span>
+          </a>
+          <button type="button" class="post-card__action-btn likes ${likedClass}" aria-label="Likes">
+            <i class="${heartIconClass}"></i>
+            <span>${post.likes || 0}</span>
           </button>
         </footer>
       </article>
     `;
   }).join("");
+}
+
+export function handleLikes() {
+  const postsContainer = document.querySelector("#posts-container");
+  if (!postsContainer || postsContainer.dataset.likesBound) return;
+  postsContainer.dataset.likesBound = "true";
+
+  postsContainer.addEventListener("click", async (e) => {
+    const likesBtn = e.target.closest(".post-card__action-btn.likes");
+    if (!likesBtn) return;
+
+    const postCard = likesBtn.closest(".post-card");
+    if (!postCard) return;
+    const postId = postCard.dataset.postId;
+    if (!postId) return;
+
+    likesBtn.disabled = true;
+    const res = await toggleLike(postId);
+    likesBtn.disabled = false;
+
+    if (!res || res.error) {
+      return;
+    }
+
+    const isLiked = res.liked === true;
+    likesBtn.classList.toggle("liked", isLiked);
+    likesBtn.classList.toggle("active", isLiked);
+    
+    const countSpan = likesBtn.querySelector("span");
+    if (countSpan) countSpan.textContent = res.likes || 0;
+
+    const heartIcon = likesBtn.querySelector("i");
+    if (heartIcon) {
+      heartIcon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+    }
+
+    // If on "liked-posts" view and unliked, dynamically remove card from view
+    if (window.location.pathname === "/liked-posts" && !isLiked) {
+      postCard.remove();
+      if (document.querySelectorAll(".post-card").length === 0) {
+        postsContainer.innerHTML = `<p class="text-muted text-center p-3">No posts found.</p>`;
+      }
+    }
+  });
 }

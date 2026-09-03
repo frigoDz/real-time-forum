@@ -1,10 +1,12 @@
-import { loadCategories, loadPosts, initMobileMenu } from "./forum.js";
+import { loadCategories, loadPosts, initMobileMenu, handleLikes, initCreatePostModal } from "./forum.js";
 
 export function initMyPosts() {
     updateActiveLink("/my-posts");
     initMobileMenu();
     loadPosts({ filter: "my-posts" });
     loadCategories();
+    handleLikes();
+    initCreatePostModal();
 }
 
 export function initLikedPosts() {
@@ -12,6 +14,8 @@ export function initLikedPosts() {
     initMobileMenu();
     loadPosts({ filter: "liked-posts" });
     loadCategories();
+    handleLikes();
+    initCreatePostModal();
 }
 
 export function updateActiveLink(path) {

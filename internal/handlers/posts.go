@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"real-time-forum/internal/database"
@@ -20,13 +23,38 @@ func Posts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	idStr := r.URL.Query().Get("post_id")
+
+	userID, _ := r.Context().Value("userID").(int)
+
+	if idStr != "" {
+		id, err := strconv.Atoi(idStr)
+		if err != nil || id <= 0 {
+			SendError(w, http.StatusBadRequest, "Invalid post ID!")
+			return
+		}
+
+		post, err := database.GetPostByID(id, userID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				SendError(w, http.StatusNotFound, "Post not found!")
+				return
+			}
+			SendError(w, http.StatusInternalServerError, "Failed to get post!")
+			return
+		}
+
+		SendResponse(w, http.StatusOK, post)
+		return
+	}
+
 	categoryID := r.URL.Query().Get("category_id")
 	if categoryID == "" {
 		categoryID = r.URL.Query().Get("category")
 	}
 	filter := r.URL.Query().Get("filter")
 
-	userID, _ := r.Context().Value("userID").(int)
+	userID, _ = r.Context().Value("userID").(int)
 
 	posts, err := database.GetPostsFiltered(categoryID, filter, userID)
 	if err != nil {

@@ -80,7 +80,8 @@ html, body {
 }
 
 /* Center Posts Area (ONLY THIS SCROLLS) */
-.posts-area {
+.posts-area,
+.post-details-area {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -214,7 +215,8 @@ html, body {
     display: inline-block !important;
   }
 
-  .posts-area {
+  .posts-area,
+  .post-details-area {
     padding-bottom: 75px; /* Prevent bottom nav from obscuring feed */
   }
 }

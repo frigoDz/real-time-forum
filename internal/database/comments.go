@@ -23,10 +23,11 @@ func CreateComment(comment models.Comment) (int64, error) {
 
 func GetCommentsByPost(postID int) ([]models.Comment, error) {
 	query := `
-		SELECT id, user_id, post_id, content, created_at
-		FROM comments
-		WHERE post_id = ?
-		ORDER BY created_at ASC
+		SELECT c.id, c.user_id, COALESCE(u.nickname, 'Anonymous') AS author, c.post_id, c.content, c.created_at
+		FROM comments c
+		LEFT JOIN users u ON c.user_id = u.id
+		WHERE c.post_id = ?
+		ORDER BY c.created_at ASC
 	`
 
 	rows, err := DB.Query(query, postID)
@@ -43,6 +44,7 @@ func GetCommentsByPost(postID int) ([]models.Comment, error) {
 		err := rows.Scan(
 			&comment.ID,
 			&comment.UserID,
+			&comment.Author,
 			&comment.PostID,
 			&comment.Content,
 			&comment.CreatedAt,
@@ -56,6 +58,10 @@ func GetCommentsByPost(postID int) ([]models.Comment, error) {
 
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	if comments == nil {
+		comments = []models.Comment{}
 	}
 
 	return comments, nil

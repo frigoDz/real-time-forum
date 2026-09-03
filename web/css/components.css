@@ -194,7 +194,10 @@ a:hover {
 
 .post-card__action-btn.comments:hover {
   color: var(--blue);
+  text-decoration: none;
 }
-.post-card__action-btn.likes:hover {
+.post-card__action-btn.likes:hover,
+.post-card__action-btn.likes.active,
+.post-card__action-btn.likes.liked {
   color: var(--pink);
 }
