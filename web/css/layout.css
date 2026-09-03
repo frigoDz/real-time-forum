@@ -55,8 +55,8 @@ html, body {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding-bottom: 1rem;
   padding: 10px;
+  padding-bottom: 50px;
 }
 
 .left-side__nav {
@@ -67,7 +67,7 @@ html, body {
 }
 
 .left-side .actions {
-  margin-top: auto; /* Pushes action buttons to the very bottom */
+  margin-top: auto !important; /* Pushes action buttons to the very bottom */
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
