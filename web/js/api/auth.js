@@ -61,11 +61,11 @@ export async function register(username, email, password, firstName, lastName, a
 
 export async function logout() {
     try {
-        const response = await fetch("/api/logout");
-        if (!response.ok) return null;
+        await fetch("/api/logout", { method: 'POST' });
+    } catch (error) {
+        console.error("Logout request failed:", error);
+    } finally {
         setUser(null);
         return null;
-    } catch (error) {
-        return error;
     }
 }

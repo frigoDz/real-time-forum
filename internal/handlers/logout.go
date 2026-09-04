@@ -1,28 +1,40 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"real-time-forum/internal/database"
+	websockets "real-time-forum/internal/websockets"
 	"time"
 )
 
-func Logout(w http.ResponseWriter, r *http.Request) {
-	// delete the token from the db
-	cookie, err := r.Cookie("session")
-	fmt.Println(err, "|cookie|", cookie)
-	if err == nil {
-		err = database.DeleteSession(cookie.Value)
-		if err != nil {
-			clearSessionCookie(w)
-			SendError(w, http.StatusBadRequest, "Failed to logout properly!")
-			return
+func Logout(manager *websockets.ClientManager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err == nil && cookie.Value != "" {
+			userID, errGet := database.GetSessionByToken(cookie.Value)
+			if errGet == nil && userID > 0 {
+				_ = database.DeleteSession(cookie.Value)
+
+				// Close websocket and broadcast user_offline directly on backend
+				if client, ok := manager.GetClient(userID); ok {
+					manager.RemoveClient(userID, client)
+					_ = client.Conn.Close()
+				}
+
+				if !manager.IsOnline(userID) {
+					manager.Broadcast(map[string]any{
+						"type":   "user_offline",
+						"userId": userID,
+					})
+				}
+			}
 		}
+
+		clearSessionCookie(w)
+		SendResponse(w, http.StatusOK, map[string]string{
+			"message": "Logged out successfully!",
+		})
 	}
-	clearSessionCookie(w)
-	SendResponse(w, http.StatusOK, map[string]string{
-		"message": "Logged out successfully!",
-	})
 }
 
 func clearSessionCookie(w http.ResponseWriter) {

@@ -21,7 +21,7 @@ func Route() {
 	)
 	http.HandleFunc("/api/register", handlers.Register)
 	http.HandleFunc("/api/login", handlers.Login)
-	http.HandleFunc("/api/logout", handlers.Logout)
+	http.HandleFunc("/api/logout", handlers.Logout(manager))
 	http.Handle("/api/posts", middleware.AuthMiddleware(http.HandlerFunc(handlers.Posts)))
 	http.Handle("/api/posts/create",
 		middleware.AuthMiddleware(http.HandlerFunc(handlers.CreatePost)),

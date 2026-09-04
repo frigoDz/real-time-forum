@@ -111,18 +111,20 @@ export function initRegister() {
     errorElement.textContent = "";
 
     // Validation rules
-    if (firstName.length < 2 || firstName.length > 50) {
-      errorElement.textContent = "First name must be between 2 and 50 characters.";
+    const nameRegex = /^[a-zA-Z\s'-]{2,50}$/;
+    if (!nameRegex.test(firstName)) {
+      errorElement.textContent = "First name must be 2-50 letters (no emojis or numbers).";
       return;
     }
 
-    if (lastName.length < 2 || lastName.length > 50) {
-      errorElement.textContent = "Last name must be between 2 and 50 characters.";
+    if (!nameRegex.test(lastName)) {
+      errorElement.textContent = "Last name must be 2-50 letters (no emojis or numbers).";
       return;
     }
 
-    if (username.length < 3 || username.length > 30) {
-      errorElement.textContent = "Username must be between 3 and 30 characters.";
+    const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
+    if (!usernameRegex.test(username)) {
+      errorElement.textContent = "Username must be 3-30 chars, letters, numbers, _ or - only (no emojis).";
       return;
     }
 

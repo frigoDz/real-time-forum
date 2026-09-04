@@ -1,6 +1,7 @@
 import { getCategories } from "../api/categories.js";
 import { toggleLike } from "../api/likes.js";
 import { createPost, getPosts } from "../api/posts.js";
+import { getUsers } from "../api/websocket.js";
 import { state } from "../state.js";
 import { attachLengthLimit } from "../utils/limit.js";
 
@@ -85,8 +86,15 @@ export function initMobileMenu() {
   if (backdrop) backdrop.onclick = closeDrawer;
 }
 
-export function initHome() {
+export async function initHome() {
+  // online / offline users on right aside start
   initMobileMenu();
+
+  currentUsers = await getUsers();
+  renderUserLists(currentUsers);
+  setupWsPresenceListener();
+  // online / offline users on right aside end
+
 
   // Custom Category Dropdown Toggle
   const dropdownBtn = document.querySelector("#category-dropdown-btn");
@@ -107,7 +115,7 @@ export function initHome() {
 
   // Load dynamic categories & posts
   loadCategories();
-  
+
   // Detect route filter
   const path = window.location.pathname;
   let params = {};
@@ -128,7 +136,7 @@ export function initHome() {
 
     submitPostBtn.addEventListener("click", async () => {
       const postContent = textarea ? textarea.value.trim() : "";
-      
+
       if (postErrorElement) postErrorElement.textContent = "";
 
       // 1. Content validation
@@ -240,10 +248,10 @@ export function renderLeftAside() {
           <i class="fa-solid fa-pen-to-square"></i>
           <span>Post</span>
         </button>
-        <button type="button" class="btn logout-btn">
+        <a href="/logout" data-link class="btn logout-btn">
           <i class="fa-solid fa-arrow-right-from-bracket logout-icon"></i>
           <span>Logout</span>
-        </button>
+        </a>
       </div>
     </aside>
   `;
@@ -308,6 +316,74 @@ export function renderRightAside() {
   `;
 }
 
+let currentUsers = [];
+let wsListenerAttached = false;
+
+function setupWsPresenceListener() {
+  if (wsListenerAttached) return;
+  wsListenerAttached = true;
+
+  window.addEventListener("ws:message", (e) => {
+    const msg = e.detail;
+
+    if (msg.type === "user_online" || msg.type === "user_offline") {
+      const targetUser = currentUsers.find(u => u.id === msg.userId);
+      if (targetUser) {
+        targetUser.online = (msg.type === "user_online");
+        renderUserLists(currentUsers);
+      } else {
+        getUsers().then(newUsers => {
+          currentUsers = newUsers;
+          renderUserLists(currentUsers);
+        });
+      }
+    }
+  });
+}
+
+export function renderUserLists(users = []) {
+  const onlineUsersContainer = document.querySelector("#online-users-list");
+  const offlineUsersContainer = document.querySelector("#offline-users-list");
+
+  if (!Array.isArray(users)) return;
+
+  const onlineUsers = users.filter(u => u.online);
+  const offlineUsers = users.filter(u => !u.online);
+
+  if (onlineUsersContainer) {
+    if (onlineUsers.length === 0) {
+      onlineUsersContainer.innerHTML = `<p class="text-muted text-center p-2" style="font-size: 0.8rem;">No users online</p>`;
+    } else {
+      onlineUsersContainer.innerHTML = onlineUsers.map(u => renderUserCard(u)).join("");
+    }
+  }
+
+  if (offlineUsersContainer) {
+    if (offlineUsers.length === 0) {
+      offlineUsersContainer.innerHTML = `<p class="text-muted text-center p-2" style="font-size: 0.8rem;">No users offline</p>`;
+    } else {
+      offlineUsersContainer.innerHTML = offlineUsers.map(u => renderUserCard(u)).join("");
+    }
+  }
+}
+
+function renderUserCard(user) {
+  const avatarChar = (user.nickname ? user.nickname.charAt(0) : "U").toUpperCase();
+  const statusDotClass = user.online ? "status-dot--online" : "status-dot--offline";
+
+  return /* html */ `
+    <a href="/messages?user=${user.id}" data-link class="user-item" data-user-id="${user.id}">
+      <div class="avatar">
+        <span>${avatarChar}</span>
+        <span class="status-dot ${statusDotClass}"></span>
+      </div>
+      <div class="user-item__info">
+        <span class="user-item__name">${user.nickname}</span>
+      </div>
+    </a>
+  `;
+}
+
 export function renderMobileOverlay() {
   return /* html */ `
     <div id="mobile-categories-overlay" class="mobile-overlay hidden">
@@ -336,10 +412,10 @@ export function renderMobileOverlay() {
               <i class="fa-solid fa-pen-to-square"></i>
               <span>Create Post</span>
             </button>
-            <button type="button" class="btn logout-btn mobile-logout-btn">
+            <a href="/logout" data-link class="btn logout-btn mobile-logout-btn">
               <i class="fa-solid fa-arrow-right-from-bracket logout-icon"></i>
               <span>Logout</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -610,7 +686,7 @@ export async function loadPosts(params = {}) {
 
   container.innerHTML = posts.map(post => {
     const formattedDate = post.createdAt ? new Date(post.createdAt).toLocaleDateString("en-GB") : "Recently";
-    const categoriesBadges = (post.categories || []).map(cat => 
+    const categoriesBadges = (post.categories || []).map(cat =>
       `<span class="post-card__category-badge">${cat}</span>`
     ).join(" ");
 
@@ -633,7 +709,7 @@ export async function loadPosts(params = {}) {
           ${categoriesBadges ? `<div class="post-card__categories">${categoriesBadges}</div>` : ""}
         </div>
         <footer class="post-card__actions">
-          <a href="/post?id=${post.id}" class="post-card__action-btn comments" aria-label="Comments">
+          <a href="/post?id=${post.id}" data-link class="post-card__action-btn comments" aria-label="Comments">
             <i class="fa-regular fa-comment"></i>
             <span>${post.commentsCount || 0}</span>
           </a>
@@ -672,7 +748,7 @@ export function handleLikes() {
     const isLiked = res.liked === true;
     likesBtn.classList.toggle("liked", isLiked);
     likesBtn.classList.toggle("active", isLiked);
-    
+
     const countSpan = likesBtn.querySelector("span");
     if (countSpan) countSpan.textContent = res.likes || 0;
 

@@ -12,12 +12,10 @@ export function connectWebsocket() {
     }
 
     socket.onmessage = e => {
-        socket.onmessage = e => {
-            let data = JSON.parse(e.data);
-            console.log("ws incoming data", data);
-            window.dispatchEvent(new CustomEvent("ws:message", { detail: data }));
-        };
-    }
+        let data = JSON.parse(e.data);
+        console.log("ws incoming data", data);
+        window.dispatchEvent(new CustomEvent("ws:message", { detail: data }));
+    };
 
     socket.onerror = err => {
         console.log("ws connection error", err)
@@ -26,7 +24,7 @@ export function connectWebsocket() {
 
 export function sendMessage(data) {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ recieverId: data.id, content: data.content }))
+        socket.send(JSON.stringify({ receiverId: data.id, content: data.content }))
     }
 }
 
@@ -34,5 +32,16 @@ export function disconnectWebsocket() {
     if (socket) {
         socket.close();
         socket = null;
+    }
+}
+
+export async function getUsers() {
+    try {
+        const res = await fetch("/api/conversations")
+        if (!res.ok) return [];
+        return await res.json()
+    } catch (error) {
+        console.error("Failed to fetch users:", error);
+        return [];
     }
 }

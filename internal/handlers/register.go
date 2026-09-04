@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"regexp"
 	"strings"
 
 	"real-time-forum/internal/auth"
@@ -57,13 +58,27 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. Validate Password length
+	// 4. Validate Nickname format (no emojis or special symbols)
+	nicknameRegex := regexp.MustCompile(`^[a-zA-Z0-9_-]{3,30}$`)
+	if !nicknameRegex.MatchString(req.Nickname) {
+		SendError(w, http.StatusBadRequest, "Username must be 3-30 characters long and contain only letters, numbers, underscores, or hyphens!")
+		return
+	}
+
+	// 5. Validate First and Last Name format
+	nameRegex := regexp.MustCompile(`^[a-zA-Z\s'-]{2,50}$`)
+	if !nameRegex.MatchString(req.FirstName) || !nameRegex.MatchString(req.LastName) {
+		SendError(w, http.StatusBadRequest, "First and last names must contain only letters, spaces, hyphens, or apostrophes!")
+		return
+	}
+
+	// 6. Validate Password length
 	if len(req.Password) < 8 || len(req.Password) > 72 {
 		SendError(w, http.StatusBadRequest, "Password must be between 8 and 72 characters!")
 		return
 	}
 
-	// 5. Validate Age boundaries
+	// 7. Validate Age boundaries
 	if req.Age < 13 || req.Age > 120 {
 		SendError(w, http.StatusBadRequest, "Age must be between 13 and 120!")
 		return

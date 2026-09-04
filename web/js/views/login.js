@@ -1,4 +1,5 @@
 import { login } from "../api/auth.js";
+import { connectWebsocket } from "../api/websocket.js";
 import { navigateTo } from "../router.js";
 
 export function renderLogin() {
@@ -77,6 +78,7 @@ export function initLogin() {
     const res = await login(identifier, password);
 
     if (res && !res.error) {
+      connectWebsocket()
       navigateTo("/");
     } else {
       errorElement.textContent = res?.error || "Invalid identifier or password!";
