@@ -50,8 +50,8 @@ export function renderRegister() {
               <i class="fa-solid fa-venus-mars input-icon"></i>
               <select name="gender" id="gender" required>
                 <option value="" disabled selected>Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
               </select>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function initRegister() {
       return;
     }
 
-    if (gender !== "Male" && gender !== "Female") {
+    if (gender !== "male" && gender !== "female") {
       errorElement.textContent = "Please select a valid gender.";
       return;
     }

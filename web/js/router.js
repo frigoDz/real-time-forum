@@ -51,7 +51,7 @@ const routes = {
         init: initMessages
     },
     "/post": {
-        title: "Post Daitails",
+        title: "Post Details",
         render: renderPostDetails,
         init: initPostDetails
     },
