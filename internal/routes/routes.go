@@ -16,7 +16,7 @@ func Route() {
 	)
 	http.Handle("/api/conversations",
 		middleware.AuthMiddleware(
-			http.HandlerFunc(handlers.ConversationUsers),
+			handlers.ConversationUsers(manager),
 		),
 	)
 	http.HandleFunc("/api/register", handlers.Register)
