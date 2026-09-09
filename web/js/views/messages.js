@@ -59,6 +59,7 @@ export async function initMessages() {
     const selectedUser = users.find(u => u.id === targetUserId);
     if (chatBody && selectedUser) {
       chatState.activeChatUser = targetUserId;
+      chatState.activeChatUserNickname = selectedUser.nickname;
       chatState.chatOffset = 0;
       chatState.hasMoreMessages = true;
 
