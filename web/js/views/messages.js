@@ -356,10 +356,18 @@ function renderMessageCard(msg) {
   const dateStr = msg.CreatedAt || msg.created_at;
   const key = id ? `msg-id-${id}` : `msg-${sId}-${rId}-${dateStr}-${msg.Content || msg.content}`;
 
+  const senderName = isOutgoing
+    ? (state.user && state.user.nickname ? state.user.nickname : "You")
+    : (chatState.activeChatUserNickname || "User");
+  const cleanSenderName = escapeHTML(senderName);
+
   return /* html */ `
     <div class="message-card ${msgClass}" data-msg-key="${escapeHTML(key)}">
+      <div class="message-meta">
+        <span class="message-sender">${cleanSenderName}</span>
+        <span class="message-date">${timeStr}</span>
+      </div>
       <p class="message-content">${cleanContent}</p>
-      <span class="message-date">${timeStr}</span>
     </div>
   `;
 }
