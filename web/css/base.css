@@ -47,3 +47,9 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
 }
+
+/* Accessible Focus States */
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}

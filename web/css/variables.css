@@ -10,17 +10,17 @@
   --border-color: #2f3336;
   --border-focus: #e7e9ea;
 
-  --text-main: #f7f9f9;
-  --text-muted: #71767b;
-  --text-dim: #53575b;
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
 
   --accent-color: #ffffff;
-  --accent-hover: #d7dbdc;
-  --error-color: #f4212e;
-  --success-color: #00ba7c;
-  --warning-color: #ffd400;
-  --blue: #1d9bf0;
-  --pink: rgb(239, 27, 87);
+  --accent-hover: #e5e7eb;
+  --error-color: #ef4444;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --blue: #38bdf8;
+  --pink: #f43f5e;
 
   /* Typography */
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

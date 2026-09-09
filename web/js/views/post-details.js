@@ -1,10 +1,13 @@
 import { getComments, createComment } from "../api/comments.js";
 import { getPostById } from "../api/posts.js";
 import { toggleLike } from "../api/likes.js";
-import { initMobileMenu, loadCategories, renderHeader, renderLeftAside, renderMobileOverlay, renderRightAside, renderCreatePostModal, initCreatePostModal } from "./forum.js";
+import { getUsers } from "../api/messages.js";
+import { state } from "../state.js";
+import { initMobileMenu, loadCategories, renderHeader, renderLeftAside, renderMobileOverlay, renderRightAside, renderCreatePostModal, initCreatePostModal, renderUserLists, setupWsPresenceListener } from "./forum.js";
 import { attachLengthLimit } from "../utils/limit.js";
 
 export function renderPostDetails() {
+  const avatarChar = (state.user && state.user.nickname ? state.user.nickname.charAt(0) : "U").toUpperCase();
   return /* html */`
     <div class="home-view post-details">
       ${renderHeader()}
@@ -14,7 +17,7 @@ export function renderPostDetails() {
           <div id="post-card-container"></div>
           
           <div id="post-comment-box" class="create-post-box create-comment-box">
-            <div class="avatar">U</div>
+            <div class="avatar">${avatarChar}</div>
             <div class="create-post-box__content">
               <textarea name="comment-content" id="comment-content" class="post-content comment-textarea" aria-label="Post your reply" placeholder="Post your reply..."></textarea>
               <div class="create-post-box__footer">
@@ -42,6 +45,10 @@ export async function initPostDetails() {
   initMobileMenu();
   loadCategories();
   initCreatePostModal();
+  setupWsPresenceListener();
+
+  const users = await getUsers();
+  renderUserLists(users);
 
   const params = new URLSearchParams(window.location.search);
   const postId = params.get("id");
@@ -60,7 +67,7 @@ async function loadComments(postId) {
   const comments = await getComments(postId);
 
   if (!comments || comments.length === 0) {
-    commentsContainer.innerHTML = `<p class="no-comments">No comments yet. Be the first to reply!</p>`;
+    commentsContainer.innerHTML = renderNoComments();
     return;
   }
 
@@ -216,3 +223,14 @@ function addComment(postId) {
   });
 }
 
+function renderNoComments() {
+  return /* html */ `
+    <div class="empty-state empty-state--card">
+      <div class="empty-state__icon-circle">
+        <i class="fa-solid fa-comments"></i>
+      </div>
+      <h3 class="empty-state__title">No replies yet</h3>
+      <p class="empty-state__description">Be the first to share your thoughts and reply to this post!</p>
+    </div>
+  `;
+}

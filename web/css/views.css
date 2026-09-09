@@ -88,6 +88,7 @@ label {
 .home-header .header-search {
     max-width: 380px;
     flex: 1;
+    display: none;
 }
 
 .home-header .user-info {
@@ -202,8 +203,7 @@ label {
 
 .create-post-box {
     background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--border-color);
     padding: 1rem;
     display: flex;
     gap: 0.85rem;
@@ -218,6 +218,7 @@ label {
     height: 2px;
     background-color: var(--bg-tertiary);
     overflow: hidden;
+    display: none;
 }
 .length-limit span {
     position: absolute;
@@ -442,7 +443,7 @@ label {
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding-bottom: 0.4rem;
+    padding: 10px;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 0.25rem;
 }
@@ -604,234 +605,6 @@ label {
 }
 
 /* ==========================================================================
-   Admin Control Panel Dashboard Styles
-   ========================================================================== */
-.admin-container {
-    max-width: var(--container-max-width);
-    margin: 0 auto;
-    padding: 1.5rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    min-height: 100vh;
-}
-
-.admin-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
-}
-
-.admin-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--text-main);
-}
-
-.admin-brand i {
-    font-size: 1.5rem;
-    color: var(--error-color);
-}
-
-.admin-brand h1 {
-    font-size: 1.4rem;
-    font-weight: 800;
-}
-
-.admin-exit-btn {
-    width: auto;
-    padding: 0.45rem 1rem;
-    font-size: 0.85rem;
-    text-decoration: none !important;
-}
-
-.admin-tabs {
-    display: flex;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.admin-tab {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    font-weight: 600;
-    padding: 0.75rem 1.25rem;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition:
-        color var(--transition-fast),
-        border-color var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.admin-tab:hover {
-    color: var(--text-main);
-}
-
-.admin-tab.active {
-    color: var(--text-main);
-    border-bottom-color: #ffffff;
-}
-
-.admin-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.admin-search {
-    max-width: 320px;
-    flex: 1;
-}
-
-.admin-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.selected-count-badge {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    font-weight: 600;
-}
-
-.btn-delete-batch {
-    width: auto;
-    background-color: var(--error-color);
-    color: #ffffff;
-    padding: 0.5rem 1.25rem;
-    font-size: 0.875rem;
-}
-
-.btn-delete-batch:hover {
-    background-color: #dc2626;
-}
-
-.admin-table-wrapper {
-    overflow-x: auto;
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-}
-
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    font-size: 0.9rem;
-}
-
-.admin-table th,
-.admin-table td {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.admin-table th {
-    background-color: var(--bg-tertiary);
-    color: var(--text-muted);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.775rem;
-    letter-spacing: 0.05em;
-}
-
-.admin-table tr:hover {
-    background-color: var(--bg-hover-solid);
-}
-
-.admin-loading,
-.admin-error,
-.admin-empty {
-    text-align: center;
-    padding: 2.5rem 1rem;
-    color: var(--text-muted);
-}
-
-.admin-btn-icon {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    cursor: pointer;
-    padding: 0.35rem 0.5rem;
-    border-radius: var(--radius-sm);
-    transition:
-        color var(--transition-fast),
-        background-color var(--transition-fast);
-}
-
-.admin-btn-icon:hover {
-    color: var(--text-main);
-    background-color: var(--bg-hover-solid);
-}
-
-.admin-btn-icon.text-error:hover {
-    color: var(--error-color);
-    background-color: rgba(244, 33, 46, 0.1);
-}
-
-.admin-add-btn {
-    width: auto;
-    padding: 0.45rem 1rem;
-    font-size: 0.85rem;
-}
-
-.admin-edit-modal-content {
-    max-width: 480px;
-}
-
-.admin-edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.admin-edit-form label {
-    display: block;
-    font-size: 0.825rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 0.35rem;
-}
-
-.admin-edit-form input[type="text"],
-.admin-edit-form input[type="email"],
-.admin-edit-form input[type="number"],
-.admin-edit-form select {
-    width: 100%;
-    padding: 0.65rem 0.85rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
-    font-size: 0.9rem;
-    outline: none;
-}
-
-.admin-textarea {
-    width: 100%;
-    padding: 0.65rem 0.85rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color) !important;
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
-    font-size: 0.9rem;
-    min-height: 100px;
-    resize: vertical;
-}
-
-/* ==========================================================================
    Post Details & Comments UI Styles
    ========================================================================== */
 .post-details-area {
@@ -841,17 +614,15 @@ label {
 }
 
 #post-card-container .post-card {
-    border: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
     background-color: var(--bg-primary);
-    border-radius: var(--radius-md);
     padding: 1.25rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .create-comment-box {
     background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--border-color);
     padding: 1rem;
     display: flex;
     gap: 0.85rem;
@@ -886,7 +657,7 @@ label {
 #comments-container {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .comment-card {
@@ -1159,6 +930,6 @@ label {
 
 .modal-create-post-error {
   font-size: 0.85rem;
-  color: var(--pink);
+  color: var(--error-color);
   margin-top: 0.25rem;
 }

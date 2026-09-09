@@ -1,9 +1,10 @@
 import { getCategories } from "../api/categories.js";
 import { toggleLike } from "../api/likes.js";
 import { createPost, getPosts } from "../api/posts.js";
-import { getUsers } from "../api/websocket.js";
-import { state } from "../state.js";
+import { getUsers, fetchMessages } from "../api/messages.js";
+import { state, chatState, markUserUnread, markUserRead } from "../state.js";
 import { attachLengthLimit } from "../utils/limit.js";
+import { navigateTo } from "../router.js";
 
 export function renderHome() {
   return /* html */`
@@ -116,10 +117,14 @@ export async function initHome() {
   // Load dynamic categories & posts
   loadCategories();
 
-  // Detect route filter
+  // Detect route filter & URL category parameter
   const path = window.location.pathname;
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCatId = urlParams.get("category") || urlParams.get("category_id");
+
   let params = {};
-  if (path === "/my-posts") params = { filter: "my-posts" };
+  if (urlCatId) params = { category_id: urlCatId };
+  else if (path === "/my-posts") params = { filter: "my-posts" };
   else if (path === "/liked-posts") params = { filter: "liked-posts" };
 
   loadPosts(params);
@@ -178,29 +183,23 @@ export async function initHome() {
       }
     });
   }
-
-  handleLikes()
-
 }
 
 export function renderHeader() {
+  const avatarChar = (state.user && state.user.nickname ? state.user.nickname.charAt(0) : "U").toUpperCase();
+  const nickname = state.user && state.user.nickname ? state.user.nickname : "user";
+
   return /* html */ `
     <header class="home-header">
       <div class="logo">
         <img style="width: 40px; height:40px" src="./imgs/logo.png" alt="Logo">
       </div>
-      <div class="header-search">
-        <div class="input-field">
-          <i class="fa-solid fa-magnifying-glass input-icon"></i>
-          <input aria-label="Search posts" type="search" name="search" id="search" placeholder="Search forum...">
-        </div>
-      </div>
       <div class="user-info">
         <div class="avatar">
-          <span>U</span>
+          <span>${avatarChar}</span>
           <span class="status-dot status-dot--online"></span>
         </div>
-        <span class="username">@${state.user.nickname}</span>
+        <span class="username">@${nickname}</span>
       </div>
       <button type="button" id="menu-toggle-btn" class="menu-toggle" aria-label="Open Menu">
         <i class="fa-solid fa-bars"></i>
@@ -259,10 +258,11 @@ export function renderLeftAside() {
 
 function renderCreatePostBox() {
   if (location.pathname !== "/") return `<span></span>`;
+  const avatarChar = (state.user && state.user.nickname ? state.user.nickname.charAt(0) : "U").toUpperCase();
   return /* html */ `
     <div class="create-post-container">
       <div class="create-post-box">
-        <div class="avatar">U</div>
+        <div class="avatar">${avatarChar}</div>
         <div class="create-post-box__content">
           <textarea name="post-content" id="post-content" class="post-content" aria-label="What's happening?" placeholder="What is happening?!"></textarea>
 
@@ -300,16 +300,9 @@ export function renderRightAside() {
   return /* html */ `
     <aside class="right-side">
       <div class="users-group">
-        <h3 class="users-group__header">Online Users</h3>
-        <div id="online-users-list" class="users-group__list">
-          <!-- Dynamic online users loaded here via WebSocket/API -->
-        </div>
-      </div>
-
-      <div class="users-group">
-        <h3 class="users-group__header">Offline Users</h3>
-        <div id="offline-users-list" class="users-group__list">
-          <!-- Dynamic offline users loaded here via WebSocket/API -->
+        <h3 class="users-group__header">All Users</h3>
+        <div id="users-list" class="users-group__list">
+          <!-- Dynamic users loaded here via WebSocket/API -->
         </div>
       </div>
     </aside>
@@ -319,17 +312,20 @@ export function renderRightAside() {
 let currentUsers = [];
 let wsListenerAttached = false;
 
-function setupWsPresenceListener() {
+export function setupWsPresenceListener() {
   if (wsListenerAttached) return;
   wsListenerAttached = true;
 
   window.addEventListener("ws:message", (e) => {
     const msg = e.detail;
+    if (!msg) return;
 
+    // 1. Presence updates
     if (msg.type === "user_online" || msg.type === "user_offline") {
+      const isOnline = (msg.type === "user_online");
       const targetUser = currentUsers.find(u => u.id === msg.userId);
       if (targetUser) {
-        targetUser.online = (msg.type === "user_online");
+        targetUser.online = isOnline;
         renderUserLists(currentUsers);
       } else {
         getUsers().then(newUsers => {
@@ -337,45 +333,89 @@ function setupWsPresenceListener() {
           renderUserLists(currentUsers);
         });
       }
+      return;
+    }
+
+    // 2. Incoming real-time private messages
+    if (msg.Content || msg.content) {
+      const senderId = msg.SenderID || msg.sender_id || msg.senderId;
+      if (!senderId) return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const activeChatUserId = parseInt(urlParams.get("userId"), 10);
+      const isViewingChatWithSender = (window.location.pathname === "/messages" && activeChatUserId === senderId);
+
+      if (!isViewingChatWithSender) {
+        markUserUnread(senderId);
+      }
+
+      let targetUser = currentUsers.find(u => u.id === senderId);
+      const msgDate = msg.CreatedAt || msg.created_at || new Date().toISOString();
+
+      if (targetUser) {
+        targetUser.lastMessageDate = msgDate;
+      } else {
+        getUsers().then(newUsers => {
+          currentUsers = newUsers;
+          renderUserLists(currentUsers);
+        });
+        return;
+      }
+
+      renderUserLists(currentUsers);
     }
   });
 }
 
 export function renderUserLists(users = []) {
-  const onlineUsersContainer = document.querySelector("#online-users-list");
-  const offlineUsersContainer = document.querySelector("#offline-users-list");
+  if (Array.isArray(users)) {
+    currentUsers = users;
+  }
+  const usersContainer = document.querySelector("#users-list");
+  if (!usersContainer || !Array.isArray(currentUsers)) return;
 
-  if (!Array.isArray(users)) return;
+  // Discord-style sorting: Latest message first, then alphabetical
+  currentUsers.sort((a, b) => {
+    const aTime = a.lastMessageDate ? new Date(a.lastMessageDate).getTime() : 0;
+    const bTime = b.lastMessageDate ? new Date(b.lastMessageDate).getTime() : 0;
 
-  const onlineUsers = users.filter(u => u.online);
-  const offlineUsers = users.filter(u => !u.online);
-
-  if (onlineUsersContainer) {
-    if (onlineUsers.length === 0) {
-      onlineUsersContainer.innerHTML = `<p class="text-muted text-center p-2" style="font-size: 0.8rem;">No users online</p>`;
-    } else {
-      onlineUsersContainer.innerHTML = onlineUsers.map(u => renderUserCard(u)).join("");
+    if (aTime !== bTime) {
+      return bTime - aTime;
     }
+    return (a.nickname || "").localeCompare(b.nickname || "");
+  });
+
+  if (currentUsers.length === 0) {
+    usersContainer.innerHTML = renderNoUsers();
+  } else {
+    usersContainer.innerHTML = currentUsers.map(u => renderUserCard(u)).join("");
   }
 
-  if (offlineUsersContainer) {
-    if (offlineUsers.length === 0) {
-      offlineUsersContainer.innerHTML = `<p class="text-muted text-center p-2" style="font-size: 0.8rem;">No users offline</p>`;
-    } else {
-      offlineUsersContainer.innerHTML = offlineUsers.map(u => renderUserCard(u)).join("");
-    }
-  }
+  // Attach click handler to clear unread indicator when opening chat with a user
+  usersContainer.querySelectorAll(".user-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const userId = parseInt(item.dataset.userId, 10);
+      if (userId) {
+        markUserRead(userId);
+        const unreadDot = item.querySelector(".unread-dot");
+        if (unreadDot) unreadDot.remove();
+      }
+    });
+  });
 }
 
 function renderUserCard(user) {
   const avatarChar = (user.nickname ? user.nickname.charAt(0) : "U").toUpperCase();
   const statusDotClass = user.online ? "status-dot--online" : "status-dot--offline";
+  const isUnread = chatState.unreadUserIds && chatState.unreadUserIds.has(user.id);
+  const unreadDotHTML = isUnread ? `<span class="unread-dot" title="Unread message"></span>` : "";
 
   return /* html */ `
-    <a href="/messages?user=${user.id}" data-link class="user-item" data-user-id="${user.id}">
+    <a href="/messages?userId=${user.id}" data-link class="user-item" data-user-id="${user.id}">
       <div class="avatar">
         <span>${avatarChar}</span>
         <span class="status-dot ${statusDotClass}"></span>
+        ${unreadDotHTML}
       </div>
       <div class="user-item__info">
         <span class="user-item__name">${user.nickname}</span>
@@ -385,14 +425,16 @@ function renderUserCard(user) {
 }
 
 export function renderMobileOverlay() {
+  const avatarChar = (state.user && state.user.nickname ? state.user.nickname.charAt(0) : "U").toUpperCase();
+  const nickname = state.user && state.user.nickname ? state.user.nickname : "user";
   return /* html */ `
     <div id="mobile-categories-overlay" class="mobile-overlay hidden">
       <div class="mobile-overlay__backdrop"></div>
       <div class="mobile-overlay__drawer">
         <div class="mobile-overlay__header">
           <div class="user-info-mobile">
-            <div class="avatar">U</div>
-            <span class="username">@user</span>
+            <div class="avatar">${avatarChar}</div>
+            <span class="username">@${nickname}</span>
           </div>
           <button type="button" id="close-mobile-menu-btn" class="mobile-overlay__close-btn" aria-label="Close Menu">
             <i class="fa-solid fa-xmark"></i>
@@ -423,6 +465,15 @@ export function renderMobileOverlay() {
   `;
 }
 
+function getCategoryIcon(name) {
+  const lower = (name || "").toLowerCase();
+  if (lower.includes("general")) return "fa-solid fa-comments";
+  if (lower.includes("development") || lower.includes("dev")) return "fa-solid fa-code";
+  if (lower.includes("tech")) return "fa-solid fa-laptop-code";
+  if (lower.includes("random")) return "fa-solid fa-shuffle";
+  return "fa-solid fa-hashtag";
+}
+
 export async function loadCategories() {
   const categories = await getCategories();
   const leftList = document.querySelector("#categories-list");
@@ -434,6 +485,7 @@ export async function loadCategories() {
   // Render left sidebar & mobile overlay category links
   const linksHTML = categories.map(cat => /* html */ `
     <a href="#" data-category-id="${cat.id}" class="nav-item">
+      <i class="${getCategoryIcon(cat.name)}"></i>
       <span>${cat.name}</span>
     </a>
   `).join("");
@@ -448,6 +500,12 @@ export async function loadCategories() {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const catId = link.dataset.categoryId;
+
+        // If not on home page (/), navigate to home page with category parameter
+        if (window.location.pathname !== "/") {
+          navigateTo(`/?category=${catId}`);
+          return;
+        }
 
         // Highlight selected category link
         document.querySelectorAll("a[data-category-id]").forEach(l => {
@@ -680,7 +738,7 @@ export async function loadPosts(params = {}) {
 
   const posts = await getPosts(params);
   if (!posts || posts.length === 0) {
-    container.innerHTML = `<p class="text-muted text-center p-3">No posts found.</p>`;
+    container.innerHTML = renderNoPosts();
     return;
   }
 
@@ -761,8 +819,32 @@ export function handleLikes() {
     if (window.location.pathname === "/liked-posts" && !isLiked) {
       postCard.remove();
       if (document.querySelectorAll(".post-card").length === 0) {
-        postsContainer.innerHTML = `<p class="text-muted text-center p-3">No posts found.</p>`;
+        postsContainer.innerHTML = renderNoPosts();
       }
     }
   });
+}
+
+export function renderNoUsers() {
+  return /* html */ `
+    <div class="empty-state">
+      <div class="empty-state__icon-circle">
+        <i class="fa-solid fa-users-slash"></i>
+      </div>
+      <h4 class="empty-state__title">No users available</h4>
+      <p class="empty-state__description">There are currently no other registered users in the forum.</p>
+    </div>
+  `;
+}
+
+export function renderNoPosts() {
+  return /* html */ `
+    <div class="empty-state empty-state--card">
+      <div class="empty-state__icon-circle">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+      <h3 class="empty-state__title">No posts found</h3>
+      <p class="empty-state__description">There are no posts in this feed yet. Be the first to start a conversation!</p>
+    </div>
+  `;
 }

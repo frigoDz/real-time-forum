@@ -28,29 +28,31 @@ func ConversationUsers(manager *websockets.ClientManager) http.HandlerFunc {
 		}
 
 		type UserWithStatus struct {
-			ID        int    `json:"id"`
-			Nickname  string `json:"nickname"`
-			Age       int    `json:"age"`
-			Gender    string `json:"gender"`
-			FirstName string `json:"firstName"`
-			LastName  string `json:"lastName"`
-			Email     string `json:"email"`
-			CreatedAt string `json:"createdAt"`
-			Online    bool   `json:"online"`
+			ID              int    `json:"id"`
+			Nickname        string `json:"nickname"`
+			Age             int    `json:"age"`
+			Gender          string `json:"gender"`
+			FirstName       string `json:"firstName"`
+			LastName        string `json:"lastName"`
+			Email           string `json:"email"`
+			CreatedAt       string `json:"createdAt"`
+			Online          bool   `json:"online"`
+			LastMessageDate string `json:"lastMessageDate"`
 		}
 
 		result := make([]UserWithStatus, 0, len(users))
 		for _, user := range users {
 			result = append(result, UserWithStatus{
-				ID:        user.ID,
-				Nickname:  user.Nickname,
-				Age:       user.Age,
-				Gender:    user.Gender,
-				FirstName: user.FirstName,
-				LastName:  user.LastName,
-				Email:     user.Email,
-				CreatedAt: user.CreatedAt,
-				Online:    manager.IsOnline(user.ID),
+				ID:              user.ID,
+				Nickname:        user.Nickname,
+				Age:             user.Age,
+				Gender:          user.Gender,
+				FirstName:       user.FirstName,
+				LastName:        user.LastName,
+				Email:           user.Email,
+				CreatedAt:       user.CreatedAt,
+				Online:          manager.IsOnline(user.ID),
+				LastMessageDate: user.LastMessageDate,
 			})
 		}
 

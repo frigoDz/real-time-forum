@@ -3,7 +3,6 @@ import { renderHome, initHome } from "./views/forum.js";
 import { renderLogin, initLogin } from "./views/login.js";
 import { initLogout } from "./views/logout.js";
 import { renderRegister, initRegister } from "./views/register.js";
-import { renderAdmin, initAdmin } from "./views/admin.js";
 import { renderError } from "./views/error.js"
 import { initLikedPosts, initMyPosts } from "./views/filteredPosts.js";
 import { initMessages, renderMessages } from "./views/messages.js";
@@ -29,11 +28,6 @@ const routes = {
         title: "Register",
         render: renderRegister,
         init: initRegister
-    },
-    "/admin": {
-        title: "Admin Dashboard",
-        render: renderAdmin,
-        init: initAdmin
     },
     "/my-posts": {
         title: "My Posts",
@@ -70,7 +64,7 @@ export const router = async () => {
     let path = window.location.pathname;
 
     // Route guards with URL history synchronization
-    if (!state.isAuthenticated && path !== "/login" && path !== "/register" && path !== "/admin") {
+    if (!state.isAuthenticated && path !== "/login" && path !== "/register") {
         path = "/login";
         history.replaceState({}, "", path);
     } else if (state.isAuthenticated && (path === "/login" || path === "/register")) {

@@ -42,10 +42,9 @@ html, body {
 .main-grid {
   display: grid;
   grid-template-columns: 240px 1fr 260px;
-  gap: 1.5rem;
   flex: 1;
   min-height: 0; /* Required for nested Y scrolling */
-  padding-top: 1rem;
+  padding-top: 0;
   overflow: hidden;
 }
 
@@ -87,8 +86,9 @@ html, body {
   gap: 1.25rem;
   height: 100%;
   overflow-y: auto;
-  padding-right: 0.5rem;
   min-width: 0;
+  border: 1px solid var(--border-color);
+  border-width: 0px 1px;
 }
 
 /* Right Sidebar (Full Height, Independent Y Scrollable User Containers) */
@@ -218,5 +218,104 @@ html, body {
   .posts-area,
   .post-details-area {
     padding-bottom: 75px; /* Prevent bottom nav from obscuring feed */
+  }
+  .main-grid.chat-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .chat-view .chat-users {
+    border-right: none !important;
+  }
+  .chat-box-container {
+    padding-bottom: 60px;
+  }
+}
+
+.main-grid.chat-grid {
+  grid-template-columns: 66px 1fr;
+}
+
+.chat-view .left-side span,
+.chat-view .left-side h3 {
+  display: none !important;
+}
+
+.chat-view .posts-area.chat-area {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - var(--header-height));
+  overflow: hidden;
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  gap: 0;
+}
+
+.chat-view .chat-users {
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  height: 100%;
+}
+
+.chat-view .chat-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chat-view .chat-body.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-back-btn {
+  display: none;
+}
+
+/* Mobile Responsive Toggles */
+@media (max-width: 880px) {
+  .chat-view .posts-area.chat-area {
+    display: block;
+    height: auto;
+    border: none;
+  }
+
+  /* When no user is selected on mobile: show users list, hide chat body */
+  .chat-view .chat-area:not(.has-selected-user) .chat-users {
+    display: block;
+    width: 100%;
+  }
+
+  .chat-view .chat-area:not(.has-selected-user) .chat-body {
+    display: none;
+  }
+
+  /* When user is selected on mobile: hide users list, show chat body */
+  .chat-view .chat-area.has-selected-user .chat-users {
+    display: none;
+  }
+
+  .chat-view .chat-area.has-selected-user .chat-body {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100vh - var(--header-height));
+  }
+
+  .chat-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    color: var(--text-main);
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+    transition: background-color var(--transition-fast);
+  }
+
+  .chat-back-btn:hover {
+    background-color: var(--bg-hover);
   }
 }

@@ -9,13 +9,13 @@ import (
 
 func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) {
 	query := `
-		SELECT id, sender_id, receiver_id, content, created_at
+		SELECT id, sender_id, receiver_id, content, COALESCE(created_at, CURRENT_TIMESTAMP) AS created_at
 		FROM messages
 		WHERE
 			(sender_id = ? AND receiver_id = ?)
 			OR
 			(sender_id = ? AND receiver_id = ?)
-		ORDER BY created_at DESC
+		ORDER BY created_at DESC, id DESC
 		LIMIT ? OFFSET ?
 	`
 
@@ -144,6 +144,10 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if lastMessage.Valid {
+			user.LastMessageDate = lastMessage.String
 		}
 
 		users = append(users, user)

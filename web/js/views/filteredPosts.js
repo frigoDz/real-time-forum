@@ -1,9 +1,10 @@
-import { getUsers } from "../api/websocket.js";
-import { loadCategories, loadPosts, initMobileMenu, handleLikes, initCreatePostModal, renderUserLists } from "./forum.js";
+import { getUsers } from "../api/messages.js";
+import { loadCategories, loadPosts, initMobileMenu, handleLikes, initCreatePostModal, renderUserLists, setupWsPresenceListener } from "./forum.js";
 
 export async function initMyPosts() {
     updateActiveLink("/my-posts");
     initMobileMenu();
+    setupWsPresenceListener();
     loadPosts({ filter: "my-posts" });
     loadCategories();
     handleLikes();
@@ -15,6 +16,7 @@ export async function initMyPosts() {
 export async function initLikedPosts() {
     updateActiveLink("/liked-posts");
     initMobileMenu();
+    setupWsPresenceListener();
     loadPosts({ filter: "liked-posts" });
     loadCategories();
     handleLikes();
