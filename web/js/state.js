@@ -10,6 +10,7 @@ export function setUser(data) {
 
 export const chatState = {
     activeChatUser: null,
+    activeChatUserNickname: null,
     messages: [],
     chatOffset: 0,
     hasMoreMessages: false,
