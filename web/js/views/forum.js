@@ -5,6 +5,7 @@ import { getUsers, fetchMessages } from "../api/messages.js";
 import { state, chatState, markUserUnread, markUserRead } from "../state.js";
 import { attachLengthLimit } from "../utils/limit.js";
 import { navigateTo } from "../router.js";
+import { escapeHTML } from "../utils/sanitize.js";
 
 export function renderHome() {
   return /* html */`
@@ -768,7 +769,7 @@ export async function loadPosts(params = {}) {
           </div>
         </header>
         <div class="post-card__body">
-          <p>${post.content}</p>
+          <p>${escapeHTML(post.content)}</p>
           ${categoriesBadges ? `<div class="post-card__categories">${categoriesBadges}</div>` : ""}
         </div>
         <footer class="post-card__actions">

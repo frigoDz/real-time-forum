@@ -5,6 +5,7 @@ import { getUsers } from "../api/messages.js";
 import { state } from "../state.js";
 import { initMobileMenu, loadCategories, renderHeader, renderLeftAside, renderMobileOverlay, renderRightAside, renderCreatePostModal, initCreatePostModal, renderUserLists, setupWsPresenceListener } from "./forum.js";
 import { attachLengthLimit } from "../utils/limit.js";
+import { escapeHTML } from "../utils/sanitize.js";
 
 export function renderPostDetails() {
   const avatarChar = (state.user && state.user.nickname ? state.user.nickname.charAt(0) : "U").toUpperCase();
@@ -82,7 +83,7 @@ async function loadComments(postId) {
             <span class="comment-author">${c.author || "User"}</span>
             <span class="comment-time">• ${formattedDate}</span>
           </div>
-          <p class="comment-content">${c.content}</p>
+          <p class="comment-content">${escapeHTML(c.content)}</p>
         </div>
       </div>
     `;
@@ -133,7 +134,7 @@ async function loadPost(postId) {
         </div>
       </header>
       <div class="post-card__body">
-        <p>${post.content}</p>
+        <p>${escapeHTML(post.content)}</p>
         ${categoriesBadges ? `<div class="post-card__categories">${categoriesBadges}</div>` : ""}
       </div>
       <footer class="post-card__actions">
