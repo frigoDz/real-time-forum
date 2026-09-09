@@ -370,6 +370,11 @@ export function setupWsPresenceListener() {
 export function renderUserLists(users = []) {
   if (Array.isArray(users)) {
     currentUsers = users;
+    currentUsers.forEach(u => {
+      if (u.unread) {
+        markUserUnread(u.id);
+      }
+    });
   }
   const usersContainer = document.querySelector("#users-list");
   if (!usersContainer || !Array.isArray(currentUsers)) return;

@@ -11,4 +11,5 @@ type User struct {
 	Password        string
 	CreatedAt       string
 	LastMessageDate string
+	Unread          bool
 }

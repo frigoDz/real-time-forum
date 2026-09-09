@@ -19,6 +19,9 @@ func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) 
 		LIMIT ? OFFSET ?
 	`
 
+	// Mark unread messages from userID2 to userID1 as read
+	_, _ = DB.Exec("UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ? AND is_read = 0", userID2, userID1)
+
 	rows, err := DB.Query(
 		query,
 		userID1, userID2,
@@ -103,7 +106,8 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 			u.last_name,
 			u.email,
 			u.created_at,
-			MAX(m.created_at) AS last_message
+			MAX(m.created_at) AS last_message,
+			COALESCE((SELECT COUNT(*) FROM messages m2 WHERE m2.sender_id = u.id AND m2.receiver_id = ? AND m2.is_read = 0), 0) AS unread_count
 		FROM users u
 		LEFT JOIN messages m
 			ON (
@@ -119,7 +123,7 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 			u.nickname ASC
 	`
 
-	rows, err := DB.Query(query, userID, userID, userID)
+	rows, err := DB.Query(query, userID, userID, userID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +134,7 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 	for rows.Next() {
 		var user models.User
 		var lastMessage sql.NullString
+		var unreadCount int
 
 		err := rows.Scan(
 			&user.ID,
@@ -141,6 +146,7 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 			&user.Email,
 			&user.CreatedAt,
 			&lastMessage,
+			&unreadCount,
 		)
 		if err != nil {
 			return nil, err
@@ -149,6 +155,7 @@ func GetConversationUsers(userID int) ([]models.User, error) {
 		if lastMessage.Valid {
 			user.LastMessageDate = lastMessage.String
 		}
+		user.Unread = unreadCount > 0
 
 		users = append(users, user)
 	}

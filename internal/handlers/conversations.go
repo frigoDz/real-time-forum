@@ -38,6 +38,7 @@ func ConversationUsers(manager *websockets.ClientManager) http.HandlerFunc {
 			CreatedAt       string `json:"createdAt"`
 			Online          bool   `json:"online"`
 			LastMessageDate string `json:"lastMessageDate"`
+			Unread          bool   `json:"unread"`
 		}
 
 		result := make([]UserWithStatus, 0, len(users))
@@ -53,6 +54,7 @@ func ConversationUsers(manager *websockets.ClientManager) http.HandlerFunc {
 				CreatedAt:       user.CreatedAt,
 				Online:          manager.IsOnline(user.ID),
 				LastMessageDate: user.LastMessageDate,
+				Unread:          user.Unread,
 			})
 		}
 

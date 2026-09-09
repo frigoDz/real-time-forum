@@ -70,6 +70,7 @@ func TableCreation() {
 			sender_id INTEGER NOT NULL,
     	receiver_id INTEGER NOT NULL,
     	content TEXT NOT NULL,
+    	is_read INTEGER DEFAULT 0,
     	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     	FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
 			FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
@@ -81,6 +82,9 @@ func TableCreation() {
 			log.Fatal(err)
 		}
 	}
+
+	// Defensively ensure is_read column exists on existing databases
+	_, _ = DB.Exec("ALTER TABLE messages ADD COLUMN is_read INTEGER DEFAULT 0;")
 
 	SeedCategories()
 }
