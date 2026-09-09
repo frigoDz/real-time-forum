@@ -42,26 +42,6 @@ func Route() {
 		http.HandlerFunc(handlers.Categories),
 	))
 
-	// Admin API Endpoints (Full CRUD for DB Management)
-	http.HandleFunc("/api/admin/users", handlers.AdminUsers)
-	http.HandleFunc("/api/admin/users/update", handlers.AdminUsersUpdate)
-	http.HandleFunc("/api/admin/users/delete-batch", handlers.AdminUsersDeleteBatch)
-
-	http.HandleFunc("/api/admin/sessions", handlers.AdminSessions)
-	http.HandleFunc("/api/admin/sessions/delete-batch", handlers.AdminSessionsDeleteBatch)
-
-	http.HandleFunc("/api/admin/posts", handlers.AdminPosts)
-	http.HandleFunc("/api/admin/posts/update", handlers.AdminPostsUpdate)
-	http.HandleFunc("/api/admin/posts/delete-batch", handlers.AdminPostsDeleteBatch)
-
-	http.HandleFunc("/api/admin/categories", handlers.AdminCategories)
-	http.HandleFunc("/api/admin/categories/create", handlers.AdminCategoriesCreate)
-	http.HandleFunc("/api/admin/categories/update", handlers.AdminCategoriesUpdate)
-	http.HandleFunc("/api/admin/categories/delete-batch", handlers.AdminCategoriesDeleteBatch)
-
-	http.HandleFunc("/api/admin/comments", handlers.AdminComments)
-	http.HandleFunc("/api/admin/comments/delete-batch", handlers.AdminCommentsDeleteBatch)
-
 	http.Handle("/api/users", middleware.AuthMiddleware(
 		handlers.GetUsers(manager),
 	))
