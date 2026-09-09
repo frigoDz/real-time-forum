@@ -396,6 +396,19 @@ a:hover {
   margin: 0;
 }
 
+.message-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.message-sender {
+  font-weight: 600;
+}
+
 .message-date {
   align-self: flex-end;
   font-size: 0.7rem;
