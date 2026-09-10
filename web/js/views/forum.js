@@ -3,7 +3,6 @@ import { toggleLike } from "../api/likes.js";
 import { createPost, getPosts } from "../api/posts.js";
 import { getUsers, fetchMessages } from "../api/messages.js";
 import { state, chatState, markUserUnread, markUserRead } from "../state.js";
-import { attachLengthLimit } from "../utils/limit.js";
 import { navigateTo } from "../router.js";
 import { escapeHTML } from "../utils/sanitize.js";
 
@@ -58,9 +57,6 @@ export function renderCreatePostModal() {
               <button type="button" class="modal-post-btn" id="modal-submit-post-btn">Post</button>
             </div>
             
-            <div class="length-limit" id="modal-length-limit">
-              <span></span>
-            </div>
             <p class="modal-create-post-error error"></p>
           </div>
         </div>
@@ -137,8 +133,6 @@ export async function initHome() {
 
   if (submitPostBtn && postForm) {
     const textarea = postForm.querySelector("textarea.post-content");
-    const lengthLimit = postForm.querySelector(".length-limit");
-    const updateProgress = attachLengthLimit(textarea, lengthLimit, 2000);
 
     submitPostBtn.addEventListener("click", async () => {
       const postContent = textarea ? textarea.value.trim() : "";
@@ -173,7 +167,6 @@ export async function initHome() {
       } else {
         // Reset form on success
         if (textarea) textarea.value = "";
-        updateProgress();
         document.querySelectorAll('input[name="post-category"]:checked').forEach(cb => cb.checked = false);
         updateSelectedCategoryPills();
         if (postErrorElement) postErrorElement.textContent = "";
@@ -287,9 +280,6 @@ function renderCreatePostBox() {
 
             <button type="button" class="btn btn-accent btn-submit-post">Post</button>
           </div>
-        </div>
-        <div class="length-limit">
-          <span></span>
         </div>
       </div>
       <p class="create-post-error error"></p>
@@ -643,9 +633,6 @@ export function initCreatePostModal() {
   const textarea = document.querySelector("#modal-post-content");
   const submitBtn = document.querySelector("#modal-submit-post-btn");
   const errorElement = document.querySelector(".modal-create-post-error");
-  const lengthLimitBar = document.querySelector("#modal-length-limit");
-
-  const updateProgress = attachLengthLimit(textarea, lengthLimitBar, 2000);
 
   const openModal = () => {
     modal.classList.remove("hidden");
@@ -660,7 +647,6 @@ export function initCreatePostModal() {
     if (errorElement) errorElement.textContent = "";
     document.querySelectorAll('input[name="modal-post-category"]:checked').forEach(cb => cb.checked = false);
     updateModalCategoryPills();
-    updateProgress();
     if (dropdownMenu) dropdownMenu.classList.add("hidden");
   };
 

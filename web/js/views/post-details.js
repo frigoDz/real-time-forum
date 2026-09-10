@@ -4,7 +4,6 @@ import { toggleLike } from "../api/likes.js";
 import { getUsers } from "../api/messages.js";
 import { state } from "../state.js";
 import { initMobileMenu, loadCategories, renderHeader, renderLeftAside, renderMobileOverlay, renderRightAside, renderCreatePostModal, initCreatePostModal, renderUserLists, setupWsPresenceListener } from "./forum.js";
-import { attachLengthLimit } from "../utils/limit.js";
 import { escapeHTML } from "../utils/sanitize.js";
 
 export function renderPostDetails() {
@@ -25,9 +24,6 @@ export function renderPostDetails() {
                 <div></div>
                 <button type="button" class="btn btn-accent btn-submit-comment">Reply</button>
               </div>
-            </div>
-            <div class="length-limit">
-              <span></span>
             </div>
           </div>
           <p class="create-comment-error error"></p>
@@ -183,11 +179,8 @@ function addComment(postId) {
   const submitBtn = document.querySelector(".btn-submit-comment");
   const commentInput = document.querySelector("#comment-content");
   const commentError = document.querySelector(".create-comment-error");
-  const lengthLimit = document.querySelector(".length-limit");
 
   if (!submitBtn || !commentInput) return;
-
-  const updateProgress = attachLengthLimit(commentInput, lengthLimit, 1000);
 
   submitBtn.addEventListener("click", async () => {
     if (commentError) commentError.textContent = "";
@@ -216,7 +209,6 @@ function addComment(postId) {
       if (commentError) commentError.textContent = res.error;
     } else {
       commentInput.value = "";
-      updateProgress();
       if (commentError) commentError.textContent = "";
       await loadPost(postId);
       await loadComments(postId);
