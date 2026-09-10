@@ -36,16 +36,23 @@ export async function initMessages() {
   setupWsPresenceListener();
   initCreatePostModal();
 
+  const params = new URLSearchParams(window.location.search);
+  const targetUserId = parseInt(params.get("userId"), 10);
+
+  if (targetUserId && !isNaN(targetUserId)) {
+    chatState.activeChatUser = targetUserId;
+    markUserRead(targetUserId);
+  } else {
+    chatState.activeChatUser = null;
+  }
+
   const users = await getUsers();
   renderUserLists(users);
 
   const chatBody = document.querySelector(".chat-body");
   const chatArea = document.querySelector(".chat-area");
-  const params = new URLSearchParams(window.location.search);
-  const targetUserId = parseInt(params.get("userId"), 10);
 
   if (!targetUserId || isNaN(targetUserId)) {
-    chatState.activeChatUser = null;
     if (chatBody) {
       chatBody.innerHTML = renderEmptyChat();
       chatBody.classList.add("empty");
@@ -54,8 +61,6 @@ export async function initMessages() {
       chatArea.classList.remove("has-selected-user");
     }
   } else {
-    chatState.activeChatUser = targetUserId;
-    markUserRead(targetUserId);
     const selectedUser = users.find(u => u.id === targetUserId);
     if (chatBody && selectedUser) {
       chatState.activeChatUser = targetUserId;
@@ -258,6 +263,8 @@ function setupRealtimeWSListener() {
           }, 0);
         }
       }
+      // Silently sync is_read = 1 status in SQLite for the active chat partner
+      fetchMessages(senderId, 1, 0);
     }
   });
 }

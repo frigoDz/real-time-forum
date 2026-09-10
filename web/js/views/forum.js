@@ -372,7 +372,10 @@ export function renderUserLists(users = []) {
   if (Array.isArray(users)) {
     currentUsers = users;
     currentUsers.forEach(u => {
-      if (u.unread) {
+      if (chatState && chatState.activeChatUser === u.id) {
+        markUserRead(u.id);
+        u.unread = false;
+      } else if (u.unread) {
         markUserUnread(u.id);
       }
     });

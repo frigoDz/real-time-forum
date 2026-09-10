@@ -1,4 +1,4 @@
-import { state } from "./state.js";
+import { state, chatState } from "./state.js";
 import { renderHome, initHome } from "./views/forum.js";
 import { renderLogin, initLogin } from "./views/login.js";
 import { initLogout } from "./views/logout.js";
@@ -62,6 +62,10 @@ export function navigateTo(path) {
 
 export const router = async () => {
     let path = window.location.pathname;
+
+    if (path !== "/messages") {
+        chatState.activeChatUser = null;
+    }
 
     // Route guards with URL history synchronization
     if (!state.isAuthenticated && path !== "/login" && path !== "/register") {
