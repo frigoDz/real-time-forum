@@ -88,12 +88,12 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 				Content:    input.Content,
 			}
 
-			_, err = database.CreateMessage(message)
+			savedMessage, err := database.CreateMessage(message)
 			if err != nil {
 				continue
 			}
 
-			if err := manager.SendJSON(input.ReceiverID, message); err != nil {
+			if err := manager.SendJSON(input.ReceiverID, savedMessage); err != nil {
 				continue
 			}
 		}

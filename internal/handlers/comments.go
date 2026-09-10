@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"real-time-forum/internal/database"
 	"real-time-forum/internal/models"
@@ -44,6 +45,11 @@ func Comments(w http.ResponseWriter, r *http.Request) {
 			SendError(w, http.StatusBadRequest, "Invalid JSON Data!")
 			return
 		}
+		req.Content = strings.TrimSpace(req.Content)
+		if req.PostID <= 0 || req.Content == "" {
+			SendError(w, http.StatusBadRequest, "Post ID and Content are required!")
+			return
+		}
 
 		if req.PostID <= 0 || req.Content == "" {
 			SendError(w, http.StatusBadRequest, "Post ID and Content are required!")
@@ -71,4 +77,3 @@ func Comments(w http.ResponseWriter, r *http.Request) {
 
 	SendError(w, http.StatusMethodNotAllowed, "Method Not Allowed!")
 }
-

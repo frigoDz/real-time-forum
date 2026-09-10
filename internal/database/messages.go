@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"real-time-forum/internal/models"
 	"strings"
+	"time"
 )
 
 func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) {
 	query := `
-		SELECT id, sender_id, receiver_id, content, COALESCE(created_at, CURRENT_TIMESTAMP) AS created_at
-		FROM messages
-		WHERE
-			(sender_id = ? AND receiver_id = ?)
-			OR
-			(sender_id = ? AND receiver_id = ?)
-		ORDER BY created_at DESC, id DESC
-		LIMIT ? OFFSET ?
-	`
+    SELECT id, sender_id, receiver_id, content, strftime('%Y-%m-%dT%H:%M:%fZ', COALESCE(created_at, CURRENT_TIMESTAMP)) AS created_at
+    FROM messages
+    WHERE
+        (sender_id = ? AND receiver_id = ?)
+        OR
+        (sender_id = ? AND receiver_id = ?)
+    ORDER BY created_at DESC, id DESC
+    LIMIT ? OFFSET ?
+`
 
 	// Mark unread messages from userID2 to userID1 as read
 	_, _ = DB.Exec("UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ? AND is_read = 0", userID2, userID1)
@@ -59,28 +60,30 @@ func GetMessages(userID1, userID2, limit, offset int) ([]models.Message, error) 
 	return messages, nil
 }
 
-func CreateMessage(message models.Message) (int64, error) {
+func CreateMessage(message models.Message) (models.Message, error) {
 	if message.SenderID <= 0 {
-		return 0, fmt.Errorf("invalid sender")
+		return models.Message{}, fmt.Errorf("invalid sender")
 	}
 
 	if message.ReceiverID <= 0 {
-		return 0, fmt.Errorf("invalid receiver")
+		return models.Message{}, fmt.Errorf("invalid receiver")
 	}
 
 	if message.SenderID == message.ReceiverID {
-		return 0, fmt.Errorf("sender and receiver cannot be the same")
+		return models.Message{}, fmt.Errorf("sender and receiver cannot be the same")
 	}
 
 	message.Content = strings.TrimSpace(message.Content)
 
 	if message.Content == "" {
-		return 0, fmt.Errorf("message cannot be empty")
+		return models.Message{}, fmt.Errorf("message cannot be empty")
 	}
 
+	message.CreatedAt = time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+
 	query := `
-		INSERT INTO messages (sender_id, receiver_id, content)
-		VALUES (?, ?, ?)
+		INSERT INTO messages (sender_id, receiver_id, content, created_at)
+		VALUES (?, ?, ?, ?)
 	`
 
 	result, err := DB.Exec(
@@ -88,12 +91,19 @@ func CreateMessage(message models.Message) (int64, error) {
 		message.SenderID,
 		message.ReceiverID,
 		message.Content,
+		message.CreatedAt,
 	)
 	if err != nil {
-		return 0, err
+		return models.Message{}, err
 	}
 
-	return result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return models.Message{}, err
+	}
+	message.ID = int(id)
+
+	return message, nil
 }
 func GetConversationUsers(userID int) ([]models.User, error) {
 	query := `
