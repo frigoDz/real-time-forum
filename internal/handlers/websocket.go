@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	websockets "real-time-forum/internal/websockets"
 	"strings"
+
+	"github.com/gorilla/websocket"
 
 	"real-time-forum/internal/database"
 	"real-time-forum/internal/models"
+	websockets "real-time-forum/internal/websockets"
 )
 
 var upgrader = websocket.Upgrader{
@@ -27,11 +28,7 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 			return
 		}
 
-		client, oldClient := manager.AddClient(userID, conn)
-
-		if oldClient != nil {
-			oldClient.Conn.Close()
-		}
+		client := manager.AddClient(userID, conn)
 
 		manager.Broadcast(map[string]any{
 			"type":   "user_online",
@@ -50,6 +47,7 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 
 			conn.Close()
 		}()
+
 		for {
 			_, data, err := conn.ReadMessage()
 			if err != nil {
@@ -61,27 +59,20 @@ func WebSocketHandler(manager *websockets.ClientManager) http.HandlerFunc {
 				) {
 					log.Printf("websocket error for user %d: %v", userID, err)
 				}
-
 				break
 			}
 
 			var input models.SendMessage
-
-			err = json.Unmarshal(data, &input)
-			if err != nil {
+			if err := json.Unmarshal(data, &input); err != nil {
 				log.Printf("invalid websocket message from user %d: %v", userID, err)
 				continue
 			}
 
 			input.Content = strings.TrimSpace(input.Content)
-
-			if input.ReceiverID <= 0 || input.Content == "" {
+			if input.ReceiverID <= 0 || input.Content == "" || input.ReceiverID == userID {
 				continue
 			}
 
-			if input.ReceiverID == userID {
-				continue
-			}
 			message := models.Message{
 				SenderID:   userID,
 				ReceiverID: input.ReceiverID,
