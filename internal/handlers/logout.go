@@ -15,18 +15,16 @@ func Logout(manager *websockets.ClientManager) http.HandlerFunc {
 			if errGet == nil && userID > 0 {
 				_ = database.DeleteSession(cookie.Value)
 
-				// Close websocket and broadcast user_offline directly on backend
-				if client, ok := manager.GetClient(userID); ok {
-					manager.RemoveClient(userID, client)
+				// Close every websocket connection belonging to this user.
+				clients := manager.RemoveAllClients(userID)
+				for _, client := range clients {
 					_ = client.Conn.Close()
 				}
 
-				if !manager.IsOnline(userID) {
-					manager.Broadcast(map[string]any{
-						"type":   "user_offline",
-						"userId": userID,
-					})
-				}
+				manager.Broadcast(map[string]any{
+					"type":   "user_offline",
+					"userId": userID,
+				})
 			}
 		}
 
@@ -38,7 +36,6 @@ func Logout(manager *websockets.ClientManager) http.HandlerFunc {
 }
 
 func clearSessionCookie(w http.ResponseWriter) {
-	// clear cookies
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session",
 		Value:    "",
