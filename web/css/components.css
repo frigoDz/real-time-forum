@@ -394,6 +394,8 @@ a:hover {
   font-size: 0.95rem;
   line-height: 1.4;
   margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .message-meta {

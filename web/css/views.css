@@ -409,6 +409,8 @@ label {
 }
 .post-card__body p {
     overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 /* 4. Right Sidebar Users (Presence) */
@@ -700,6 +702,7 @@ label {
     line-height: 1.5;
     color: var(--text-main);
     word-break: break-word;
+    white-space: pre-wrap;
 }
 
 .no-comments {
