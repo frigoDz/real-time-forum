@@ -2,6 +2,15 @@ let socket = null;
 let reconnectTimer = null;
 let reconnectDelay = 3000;
 let isIntentionallyClosed = false;
+const messageChannel = typeof BroadcastChannel === "undefined"
+    ? null
+    : new BroadcastChannel("real-time-forum:messages");
+
+messageChannel?.addEventListener("message", (event) => {
+    if (event.data?.type === "message") {
+        window.dispatchEvent(new CustomEvent("ws:message", { detail: event.data.message }));
+    }
+});
 
 export function connectWebsocket() {
     if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return;
@@ -63,6 +72,12 @@ export function sendMessage(data) {
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ receiverId: data.id, content: data.content }));
     }
+}
+
+// The server intentionally sends private messages to receivers only. Relay the
+// optimistic message to other tabs belonging to the sender as well.
+export function broadcastMessage(message) {
+    messageChannel?.postMessage({ type: "message", message });
 }
 
 export function disconnectWebsocket() {

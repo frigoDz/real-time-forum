@@ -1,5 +1,5 @@
 import { fetchMessages, getUsers } from "../api/messages.js";
-import { sendMessage } from "../api/websocket.js";
+import { broadcastMessage, sendMessage } from "../api/websocket.js";
 import { chatState, state, markUserRead } from "../state.js";
 import { updateActiveLink } from "./filteredPosts.js";
 import { loadCategories, renderHeader, renderLeftAside, renderMobileOverlay, initMobileMenu, renderUserLists, setupWsPresenceListener, renderCreatePostModal, initCreatePostModal } from "./forum.js";
@@ -121,6 +121,8 @@ export async function initMessages() {
             Content: content,
             CreatedAt: new Date().toISOString()
           };
+
+          broadcastMessage(optimisticMsg);
 
           if (chatMessageBody) {
             const key = `msg-${optimisticMsg.SenderID}-${optimisticMsg.ReceiverID}-${optimisticMsg.CreatedAt}-${optimisticMsg.Content}`;
@@ -246,7 +248,12 @@ function setupRealtimeWSListener() {
     const senderId = msg.SenderID || msg.sender_id || msg.senderId;
     const receiverId = msg.ReceiverID || msg.receiver_id || msg.receiverId;
 
-    if (senderId === chatState.activeChatUser && state.user && receiverId === state.user.id) {
+    const isActiveConversation = state.user && (
+      (senderId === chatState.activeChatUser && receiverId === state.user.id) ||
+      (senderId === state.user.id && receiverId === chatState.activeChatUser)
+    );
+
+    if (isActiveConversation) {
       const chatMessageBody = document.querySelector("#chat-messages-body");
       if (chatMessageBody) {
         const id = msg.ID || msg.id;

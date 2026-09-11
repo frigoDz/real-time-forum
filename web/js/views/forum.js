@@ -327,20 +327,24 @@ export function setupWsPresenceListener() {
       return;
     }
 
-    // 2. Incoming real-time private messages
+    // 2. Real-time private messages (including outgoing messages relayed from another tab)
     if (msg.Content || msg.content) {
       const senderId = msg.SenderID || msg.sender_id || msg.senderId;
-      if (!senderId) return;
+      const receiverId = msg.ReceiverID || msg.receiver_id || msg.receiverId;
+      if (!senderId || !receiverId) return;
+
+      const isOutgoing = state.user && senderId === state.user.id;
+      const otherUserId = isOutgoing ? receiverId : senderId;
 
       const urlParams = new URLSearchParams(window.location.search);
       const activeChatUserId = parseInt(urlParams.get("userId"), 10);
-      const isViewingChatWithSender = (window.location.pathname === "/messages" && activeChatUserId === senderId);
+      const isViewingConversation = (window.location.pathname === "/messages" && activeChatUserId === otherUserId);
 
-      if (!isViewingChatWithSender) {
-        markUserUnread(senderId);
+      if (!isOutgoing && !isViewingConversation) {
+        markUserUnread(otherUserId);
       }
 
-      let targetUser = currentUsers.find(u => u.id === senderId);
+      let targetUser = currentUsers.find(u => u.id === otherUserId);
       const msgDate = msg.CreatedAt || msg.created_at || new Date().toISOString();
 
       if (targetUser) {
