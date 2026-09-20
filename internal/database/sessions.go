@@ -80,8 +80,3 @@ func GetAllSessions() ([]SessionInfo, error) {
 	}
 	return sessions, nil
 }
-
-func DeleteSessionByID(id int) error {
-	_, err := DB.Exec("DELETE FROM session WHERE id = ?", id)
-	return err
-}
