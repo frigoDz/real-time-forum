@@ -87,3 +87,46 @@ func GetAllUsers() ([]models.User, error) {
 	}
 	return users, nil
 }
+
+func GetAllUsersExcept(userID int) ([]models.User, error) {
+	query := `
+		SELECT id, nickname, age, gender, first_name, last_name, email, created_at
+		FROM users
+		WHERE id != ?
+		ORDER BY nickname ASC
+	`
+
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Nickname,
+			&user.Age,
+			&user.Gender,
+			&user.FirstName,
+			&user.LastName,
+			&user.Email,
+			&user.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
