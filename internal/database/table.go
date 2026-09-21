@@ -83,8 +83,5 @@ func TableCreation() {
 		}
 	}
 
-	// Defensively ensure is_read column exists on existing databases
-	_, _ = DB.Exec("ALTER TABLE messages ADD COLUMN is_read INTEGER DEFAULT 0;")
-
 	SeedCategories()
 }

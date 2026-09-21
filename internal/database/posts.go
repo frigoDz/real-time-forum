@@ -42,10 +42,10 @@ func GetPostsFiltered(categoryID string, filter string, userID int) ([]models.Po
 		args = append(args, categoryID)
 	}
 
-	if filter == "created" || filter == "my-posts" {
+	if filter == "my-posts" {
 		whereClauses = append(whereClauses, "p.user_id = ?")
 		args = append(args, userID)
-	} else if filter == "liked" || filter == "liked-posts" {
+	} else if filter == "liked-posts" {
 		whereClauses = append(whereClauses, "p.id IN (SELECT post_id FROM likes WHERE user_id = ?)")
 		args = append(args, userID)
 	}
@@ -151,7 +151,7 @@ func AddPostCategories(postID int64, categoryIDs []int) error {
 	for _, cat := range categoryIDs {
 		if !catMap[cat] {
 			return fmt.Errorf("Error: categorie/s not found!")
-		} 
+		}
 	}
 
 	query := `
@@ -230,6 +230,3 @@ func GetPostByID(id int, userID int) (*models.Post, error) {
 	post.Liked = liked
 	return &post, nil
 }
-
-
-
