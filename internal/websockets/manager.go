@@ -66,16 +66,6 @@ func (m *ClientManager) RemoveAllClients(userID int) []*Client {
 	return clients
 }
 
-func (m *ClientManager) GetClient(userID int) (*Client, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	for client := range m.clients[userID] {
-		return client, true
-	}
-	return nil, false
-}
-
 func (m *ClientManager) IsOnline(userID int) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
